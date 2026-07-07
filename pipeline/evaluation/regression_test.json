@@ -1,0 +1,32 @@
+[
+  {
+    "id": "Q3",
+    "type": "specification",
+    "question": "Power issue",
+    "answer": "Based on the provided documentation for HR652 Digital Repeater, to troubleshoot a power issue, follow these steps:\n\n- Check whether the power adapter is damaged. If yes, replace the power adapter.\n- Check whether the input voltage of external power supply is beyond the repeater's operating voltage range with a voltmeter. If yes, replace the power adapter.\n\nThe provided documentation does not cover the situation where the fan works and the heat exhaust duct is clean for HR652. For more information on this topic, please refer to section 7.5.2 Solution of the HR652 Digital Repeater manual, which only addresses the high-power HR652 model.\n\nSummary:\nFor troubleshooting a power issue with the HR652 repeater:\n- Check if the power adapter is damaged and replace it.\n- Use a voltmeter to check if the external power supply voltage is within range."
+  },
+  {
+    "id": "Q8",
+    "type": "procedural",
+    "question": "What are the exact steps to install the RD98XS repeater in a rack or cabinet?",
+    "answer": "Based on the provided documentation, specifically [Source: RD98XS Digital Repeater — 3.2.2 Installing the Repeater], the exact steps to install the RD98XS repeater in a rack or cabinet are as follows:\n\n1. Place the repeater to a proper location.\n2. Connect accessories including the antenna, feed lines, and power cords to the repeater.\n3. Ground the repeater through the Ground Screw located on the rear panel.\n\nThe documentation does not provide detailed steps for installing the repeater in a rack or cabinet. It only mentions that the repeater can be installed in such environments."
+  },
+  {
+    "id": "Q11",
+    "type": "comparison",
+    "question": "What are the main installation differences between the RD98XS and HR652 repeaters?",
+    "answer": "Based on the provided context, there is no clear comparison of the main installation differences between the RD98XS and HR652 repeaters.\n\nThe provided information only mentions the high-power HR65X features a fan, but does not specify any installation details for the HR652. \n\nTo provide accurate information, I need to know which model you mean (RD98XS or HR652)."
+  },
+  {
+    "id": "Q12",
+    "type": "comparison",
+    "question": "Which repeater is more suitable for a compact indoor site in the Netherlands, RD98XS or HR652?",
+    "answer": "Based on the provided context, here's a comparison of the two repeaters' suitability for a compact indoor site in the Netherlands:\n\n**Similarities:**\n\n* Both repeaters have a compact design, with the RD98XS being 2U height and the HR652 not having a fan (which reduces its size).\n* Both repeaters are suitable for indoor use.\n\n**Differences:**\n\n* **Power Consumption:** The HR652 is low-power, which might be beneficial for a compact indoor site where power consumption needs to be minimized.\n* **Installation Requirements:** The RD98XS has installation requirements that include meeting ambient temperature and ventilation conditions. However, it's unclear if the Netherlands' climate would pose any issues with these requirements.\n\n**HR652:**\n\n* More suitable for low-power applications and indoor use due to its compact size and reduced power consumption.\n* Does not have a fan, which reduces its size and potential heat generation.\n\n**RD98XS:**\n\n* Also compact in design but may require more careful installation to meet ambient temperature and ventilation conditions.\n* Has a higher power output than the HR652 (100W vs. no specified value for the HR652).\n\nConsidering the compact nature of the site and the need for reduced power consumption, the **HR652** might be more suitable for this specific application due to its low-power design and absence of a fan. However, it's essential to verify the installation requirements for both repeaters in the Netherlands' climate.\n\nIf you have any further questions about the RD98XS or HR652, please let me know."
+  },
+  {
+    "id": "Q14",
+    "type": "procedural",
+    "question": "Which accessories or optional components from the catalog are relevant for deploying these repeaters?",
+    "answer": "Based on the provided documentation, the following accessories or optional components from the catalog are relevant for deploying HR652 Digital Repeaters:\n\n- Repeater power cord\n- Battery (optional accessory)\n\nPlease note that other accessories may be required for deployment, but they must be specified by the dealer. The documentation does not provide a comprehensive list of recommended accessories.\n\nThe provided context only supports the statement for HR652 Digital Repeaters. For RD98XS repeaters, please specify which accessories you are referring to or ask about compatible options."
+  }
+]

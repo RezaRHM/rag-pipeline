@@ -1,0 +1,37 @@
+[
+  {
+    "id": "Q12",
+    "question": "Which repeater is more suitable for a compact indoor site in the Netherlands, RD98XS or HR652?",
+    "answer": "To answer your question accurately, I would need to know which model you are referring to. Based on the provided context, both the RD98XS and HR652 are mentioned, but there seems to be some confusion regarding their specifications and characteristics.\n\nHowever, if we compare the compact design aspect of the two repeaters, the RD98XS 100W High-power DMR Repeater Pro is described as having a \"compact 2U height structural design\" that is \"very easy and flexible to install in different cabinets,\" which suggests it is more suitable for compact indoor sites.\n\nOn the other hand, the HR652 Digital Repeater's compactness is not explicitly mentioned in the provided context. However, since it features no fan, it might be more suitable for very compact spaces or those with limited ventilation options.\n\nPlease clarify whether you are referring to the RD98XS or HR652 when making your choice."
+  },
+  {
+    "id": "Q13",
+    "question": "Do both RD98XS and HR652 support the same DMR features listed in the Hytera professional catalog?",
+    "answer": "The provided documentation does not contain this information."
+  },
+  {
+    "id": "Q14",
+    "question": "Which accessories or optional components from the catalog are relevant for deploying these repeaters?",
+    "answer": "Based on the provided context, it appears that you are referring to the HP7 SERIES flexible deployment and the RD98XS Digital Repeater.\n\nFor the HP7 SERIES, the following accessories are mentioned in the catalog as relevant for deployment:\n\n1. Battery\n2. Palm (likely a handle or grip)\n3. Wall-mount kit\n\nThese accessories can be used for convenient deployment of the repeater.\n\nRegarding the RD98XS Digital Repeater, the following optional accessories are specified in the catalog:\n\n1. Antenna UHF-M\n2. Programming cable"
+  },
+  {
+    "id": "Q15",
+    "question": "Compare the troubleshooting guidance for no transmission or poor coverage between RD98XS and HR652.",
+    "answer": "To provide a comprehensive comparison of the troubleshooting guidance for no transmission or poor coverage between RD98XS and HR652, we must refer to their respective manuals.\n\nFor **RD98XS Digital Repeater**, when a group member is out of the repeater's coverage (referring to \"Group members cannot talk to each other, even though RX indication is given\"), the solution provided is to go within the coverage area of the repeater. This is found in section 6. Troubleshooting under \"group member is out of the coverage of the repeater.\"\n\nFor **HR652 Digital Repeater**, similar guidance is also provided when a group member is out of the repeater's coverage: move the radio towards the communication coverage of the repeater. This can be found in section 8. Troubleshooting.\n\nComparing both solutions, it's clear that although the root cause of the problem (group members being out of the repeater's coverage) is the same for both models, their recommended actions differ slightly: one recommends adjusting the user's location to be within the repeater's coverage area, while the other suggests bringing the radio closer to the repeater.\n\nIn summary, the troubleshooting guidance provided by both RD98XS and HR652 Digital Repeater addresses the issue of group members being out of the repeater's coverage but presents slightly different recommendations for resolving this problem."
+  },
+  {
+    "id": "Q17",
+    "question": "What is the alarm code E47 on the Hytera RD99XS repeater?",
+    "answer": "The provided documentation does not contain this information."
+  },
+  {
+    "id": "Q18",
+    "question": "Can the HR652 be used as a 5G base station backup link?",
+    "answer": "The provided documentation does not contain information on using the HR652 as a 5G base station backup link.\n\nBased on the context, it appears that the HR652 is a digital repeater designed for DMR (Digital Mobile Radio) networks, and its primary function is to extend the communication range of Hytera radios. There is no mention of 5G or backup link capabilities in the provided documentation.\n\nIf you have any further questions about the HR652's intended use cases or applications, please feel free to ask."
+  },
+  {
+    "id": "Q20",
+    "question": "How do I waterproof the RD98XS for permanent outdoor pole mounting in heavy rain?",
+    "answer": "No relevant information was found in the available documentation for this question. Please contact Rohill technical support directly."
+  }
+]

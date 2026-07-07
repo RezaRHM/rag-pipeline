@@ -1,0 +1,251 @@
+name: rag-dry-run
+
+# ─────────────────────────────────────────────────────────────
+#  OLLAMA اجرا نمیشه داخل Docker — نیتیو روی Mac اجرا میشه
+#  LiteLLM از طریق host.docker.internal:11434 بهش وصل میشه
+#
+#  Embedding: BGE-M3 از طریق Ollama (نه infinity-emb)
+#  Reranker:  BGE Reranker از طریق کتابخونه Python
+# ─────────────────────────────────────────────────────────────
+#
+#  دستورات:
+#    docker compose --profile core up -d
+#    docker compose --profile core --profile ingest up -d
+#    docker compose --profile core --profile monitor up -d
+# ─────────────────────────────────────────────────────────────
+
+services:
+
+  # ── STORAGE ──────────────────────────────────────────────
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.5
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./data/qdrant_storage:/qdrant/storage
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    profiles: [core]
+    networks:
+      - rag-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ragdb
+      POSTGRES_USER: raguser
+      POSTGRES_PASSWORD: ragpass123
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raguser -d ragdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles: [core]
+    networks:
+      - rag-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data/minio_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    profiles: [core]
+    networks:
+      - rag-net
+
+  # ── GATEWAY & UI ─────────────────────────────────────────
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./config/litellm/config.yaml:/app/config.yaml
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:4000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    profiles: [core]
+    networks:
+      - rag-net
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    environment:
+      OPENAI_API_BASE_URL: http://litellm:4000/v1
+      OPENAI_API_KEY: sk-dry-run-key
+      WEBUI_SECRET_KEY: webui-secret-123
+      WEBUI_AUTH: "False"
+    volumes:
+      - ./data/open_webui:/app/backend/data
+    depends_on:
+      - litellm
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    profiles: [core]
+    networks:
+      - rag-net
+
+  # ── TRACING ──────────────────────────────────────────────
+
+  langfuse:
+    image: langfuse/langfuse:2
+    container_name: langfuse
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: postgresql://raguser:ragpass123@postgres:5432/ragdb
+      NEXTAUTH_SECRET: langfuse-secret-key-123
+      SALT: langfuse-salt-123
+      NEXTAUTH_URL: http://localhost:3001
+      TELEMETRY_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    profiles: [core]
+    networks:
+      - rag-net
+
+  # ── INGEST ───────────────────────────────────────────────
+
+  tika:
+    image: apache/tika:2.9.2-full
+    container_name: tika
+    restart: unless-stopped
+    ports:
+      - "9998:9998"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    profiles: [ingest]
+    networks:
+      - rag-net
+
+  unstructured:
+    image: downloads.unstructured.io/unstructured-io/unstructured-api:latest
+    container_name: unstructured
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    profiles: [ingest]
+    networks:
+      - rag-net
+
+  prefect:
+    image: prefecthq/prefect:3-latest
+    container_name: prefect
+    restart: unless-stopped
+    ports:
+      - "4200:4200"
+    command: prefect server start --host 0.0.0.0
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: "postgresql+asyncpg://raguser:ragpass123@postgres:5432/ragdb"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    profiles: [ingest]
+    networks:
+      - rag-net
+
+  # ── MONITOR ──────────────────────────────────────────────
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    profiles: [monitor]
+    networks:
+      - rag-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./data/grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    profiles: [monitor]
+    networks:
+      - rag-net
+
+# ─────────────────────────────────────────────────────────────
+networks:
+  rag-net:
+    driver: bridge

@@ -1,0 +1,33 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+*.egg-info/
+
+# Environment
+.env
+
+# Data & models (سنگین، نباید توی git برن)
+data/documents/*.pdf
+data/qdrant/
+data/postgres/
+data/minio/
+data/open_webui/
+*.bin
+*.safetensors
+
+# Docker volumes
+data/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+evaluation/*.csv
+
+# Environment files with credentials
+pipeline/env
+**/env
