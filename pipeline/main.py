@@ -138,16 +138,21 @@ def ask(question: str, conversation_history: list = None) -> dict:
         pg.close()
 
         comp_result = build_comparison(
-            retrieval_result["expanded_question"],
-            all_products,
+            original_question=retrieval_result["original_question"],
+            search_question=retrieval_result["expanded_question"],
+            products=all_products,
             top_k=3
         )
         return {
             **retrieval_result,
             "answer": comp_result["answer"],
-            "answer_source": "comparison"
+            "answer_source": "comparison",
+            "products_compared": comp_result.get("products_compared", []),
+            "comparison_status": comp_result.get("status", "compared"),
+            "method": comp_result.get("method", "?")
         }
-
+        
+        
     chunks = retrieval_result["chunks"]
     expanded_queries = retrieval_result.get("expanded_queries", [question])
 
