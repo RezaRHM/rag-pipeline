@@ -150,7 +150,8 @@ def ask(question: str, conversation_history: list = None) -> dict:
             "products_compared": comp_result.get("products_compared", []),
             "comparison_status": comp_result.get("status", "compared"),
             "method": comp_result.get("method", "?"),
-            "catalog_used": comp_result.get("catalog_used", False)
+            "catalog_used": comp_result.get("catalog_used", False),
+            "evidence_aspect": comp_result.get("evidence_aspect", None)
         }
         
         

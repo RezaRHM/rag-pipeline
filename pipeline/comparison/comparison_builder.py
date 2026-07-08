@@ -1215,6 +1215,20 @@ def build_comparison(
         if structured is not None:
             return structured
 
+    # use-case / recommendation path
+    # (aspect=None but question is suitability/deployment)
+    if _needs_catalog_reference(
+        original_question,
+        None,
+    ):
+        use_case = _use_case_comparison(
+            mentioned,
+            original_question,
+        )
+
+        if use_case is not None:
+            return use_case
+
     result = _freeform_comparison(
         mentioned,
         original_question,
@@ -1224,3 +1238,139 @@ def build_comparison(
     result["aspect_detected"] = aspect
 
     return result
+
+# ─────────────────────────────────────────────────────────
+# Use-case / recommendation comparison path
+# ─────────────────────────────────────────────────────────
+
+def _use_case_evidence_aspect(question: str) -> str:
+    """
+    برای سوالات use-case/recommendation، تعیین می‌کنه evidence
+    از کدوم aspect باید استخراج شه.
+
+    "compact indoor site" → installation evidence
+    "high temperature"    → specifications evidence
+    "DMR features"        → features evidence
+    """
+    q = question.lower()
+
+    if any(t in q for t in ["compact", "indoor", "cabinet", "rack",
+                            "wall", "site", "space", "2u", "mount"]):
+        return "installation"
+
+    if any(t in q for t in ["temperature", "voltage", "power", "frequency",
+                            "weight", "dimension", "current"]):
+        return "specifications"
+
+    if any(t in q for t in ["call", "dmr", "feature", "function", "pstn"]):
+        return "features"
+
+    return None
+
+
+def _use_case_evidence_lines(product: str, envelope: dict,
+                             evidence_aspect: str) -> list:
+    """
+    از envelope ساختارمند، خطوط evidence مرتبط با use-case رو می‌سازه.
+    فقط field هایی که status معنادار دارن (documented/confirmed).
+    """
+    if not envelope:
+        return [f"No structured evidence extracted for {product}."]
+
+    lines = []
+    for fname, field in envelope.get("fields", {}).items():
+        if not isinstance(field, dict):
+            continue
+        status = field.get("status")
+        display = fname.replace("_", " ")
+
+        if status in ("documented", "confirmed"):
+            value = field.get("value")
+            items = field.get("items")
+            if value:
+                lines.append(f"- {display}: {value} (documented)")
+            elif items:
+                lines.append(f"- {display}: {', '.join(items)} (documented)")
+            else:
+                lines.append(f"- {display}: documented")
+        elif status == "not_documented":
+            lines.append(f"- {display}: not documented in retrieved context")
+
+    if not lines:
+        lines.append("- No relevant documented evidence in retrieved context.")
+    return lines
+
+
+def _build_use_case_answer(mentioned: list, envelopes: dict,
+                           catalog_data: dict, question: str,
+                           evidence_aspect: str) -> str:
+    """
+    جواب use-case رو به‌صورت deterministic می‌سازه.
+    هیچ LLM synthesis/opinion — فقط evidence و مقایسه‌ی قدرت شواهد.
+    """
+    parts = ["**Use-case evidence comparison**\n"]
+
+    # evidence هر محصول (از structured extraction)
+    for product in mentioned:
+        parts.append(f"\n**{product}** (from product documentation):")
+        parts.extend(_use_case_evidence_lines(
+            product, envelopes.get(product), evidence_aspect))
+
+    # catalog note (deterministic، از تابع موجود)
+    if catalog_data:
+        note = _deployment_catalog_note(catalog_data, mentioned)
+        if note and note.strip():
+            parts.append("\n**Catalog Reference**\n")
+            parts.append(note)
+
+    # محدودیت صریح
+    parts.append(
+        "\n*This comparison reflects the strength of documented evidence in "
+        "the retrieved materials, not a general product recommendation. "
+        "Absence of evidence is not evidence of absence.*"
+    )
+    return "\n".join(parts)
+
+
+def _use_case_comparison(mentioned: list, question: str) -> dict:
+    """
+    مسیر recommendation/use-case:
+      evidence aspect → structured extraction (موجود، validated)
+      + catalog (موجود)
+      + decision layer deterministic
+    """
+    evidence_aspect = _use_case_evidence_aspect(question)
+    if not evidence_aspect:
+        return None  # نمی‌دونیم چه evidence ای لازمه → freeform
+
+    # extraction با همون مسیر validated موجود
+    envelopes = {}
+    for product in mentioned:
+        chunks = _retrieve_schema_aware(product, evidence_aspect, question)
+        env = extract_structured(product, evidence_aspect, question, chunks)
+        envelopes[product] = env  # ممکنه None باشه — در evidence_lines هندل می‌شه
+
+    # اگه هیچ envelope ای نداریم، این مسیر بی‌فایده‌ست
+    if not any(envelopes.values()):
+        return None
+
+    # catalog (deterministic)
+    catalog_used = False
+    catalog_data = None
+    if _needs_catalog_reference(question, None):
+        catalog_chunks = _retrieve_catalog_reference(question, None)
+        if catalog_chunks:
+            catalog_data = _filter_catalog_for_products(catalog_chunks, mentioned)
+            catalog_used = True
+
+    answer = _build_use_case_answer(mentioned, envelopes, catalog_data,
+                                     question, evidence_aspect)
+
+    return {
+        "answer": answer,
+        "products_compared": mentioned,
+        "status": "compared",
+        "method": "use_case",
+        "catalog_used": catalog_used,
+        "evidence_aspect": evidence_aspect,
+    }
