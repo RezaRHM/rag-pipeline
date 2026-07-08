@@ -26,17 +26,22 @@ questions = [
 
 results = []
 for qid, q in questions:
-    print(f'Processing {qid}...', flush=True)
+    print(f'\n{"="*70}', flush=True)
+    print(f'{qid}: {q}', flush=True)
+    print("="*70, flush=True)
     try:
         r = ask(q)
-        results.append({
-            'id': qid, 'type': r.get('query_type','?'),
-            'question': q, 'answer': r['answer']
-        })
+        ans = r['answer']
+        qtype = r.get('query_type', '?')
     except Exception as e:
-        results.append({'id': qid, 'type': 'error', 'question': q, 'answer': f'ERROR: {e}'})
-    print(f'{qid} done.', flush=True)
+        ans = f'ERROR: {e}'
+        qtype = 'error'
+    print(f'[type={qtype}]', flush=True)
+    print(ans, flush=True)
 
-with open('evaluation/full_eval_hierarchical.json', 'w') as f:
-    json.dump(results, f, ensure_ascii=False, indent=2)
-print('Saved to evaluation/full_eval_hierarchical.json')
+    results.append({'id': qid, 'type': qtype, 'question': q, 'answer': ans})
+    # incremental save — اگه وسط کار قطع شد، نتیجه‌ها بمونن
+    with open('evaluation/full_eval_hierarchical.json', 'w') as f:
+        json.dump(results, f, ensure_ascii=False, indent=2)
+
+print(f'\n\nDONE. Saved {len(results)} results.', flush=True)

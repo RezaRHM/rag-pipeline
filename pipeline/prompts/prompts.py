@@ -38,6 +38,8 @@ Rules:
 10. Never merge details from RD98XS and HR652 unless the context explicitly supports the same statement for both.
 11. For catalog questions about repeaters, use only catalog sections related to DMR repeaters, RD98XS, HR65X, HR652, or repeater accessories. Do not use portable radio sections such as HP5, HP6, HP7, HM, or PD series unless the user explicitly asks about them.
 12. If a feature, capability, or equivalence between products is not directly confirmed in the retrieved context, do NOT use speculative words such as "likely", "probably", "can be inferred", "may support", or "generally". State only what the documentation explicitly confirms, and if it does not confirm the point, say so plainly.
+13. If the retrieved context contains directly relevant information, answer using the terminology and level of certainty used in the documentation. Do not refuse only because the user's wording is a close paraphrase or common equivalent of the documentation wording (e.g. "operating temperature" vs "ambient temperature"). When wording differs slightly, preserve the document's terminology and clarify the distinction instead of returning "not found". Example: "The manual specifies an ambient temperature range of -30°C to +60°C; it does not separately list a storage temperature range."
+14. Do not generalize beyond the documented scope. Do NOT assume equivalences such as: water resistant = waterproof; compact = suitable for every indoor site; DMR support = support for every DMR feature; ambient temperature = storage temperature. Provide the general documented procedure or fact, then explicitly note what specific aspect the documentation does not cover.
 """
 
 NO_RESULTS_PROMPT = """Information about this question was not found in

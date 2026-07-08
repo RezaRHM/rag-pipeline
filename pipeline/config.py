@@ -15,7 +15,7 @@ LITELLM_BASE_URL = os.getenv("LITELLM_BASE_URL", "http://localhost:4000")
 LITELLM_API_KEY  = os.getenv("LITELLM_API_KEY", "sk-dry-run-key")
 
 # Models
-MODEL_LLAMA     = os.getenv("MODEL_LLAMA", "llama3.2-3b")
+MODEL_LLAMA     = os.getenv("MODEL_LLAMA", "llama3.1-8b")
 MODEL_QWEN      = os.getenv("MODEL_QWEN", "qwen2.5-7b")
 MODEL_DEEPSEEK  = os.getenv("MODEL_DEEPSEEK", "deepseek-r1-8b")
 MODEL_EMBEDDING = os.getenv("MODEL_EMBEDDING", "bge-m3")

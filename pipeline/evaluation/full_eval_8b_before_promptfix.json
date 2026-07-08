@@ -1,0 +1,122 @@
+[
+  {
+    "id": "Q1",
+    "type": "standard",
+    "question": "RD98XS LEDs?",
+    "answer": "The repeater's nine LED indicators can be observed on the front panel after power-on. However, the documentation does not explicitly describe what each LED indicates.\n\nBased on the provided context, it is recommended to consult the Safety Information Booklet for a comprehensive explanation of the repeater's operation and potential hazards.\n\n**Resumen:** (La repetidora tiene 9 LEDs que se pueden observar en la pantalla frontal después de encenderla. Sin embargo, no hay información explícita sobre qué indica cada LED. Es recomendable consultar el folleto de seguridad para una explicación completa sobre el funcionamiento y posibles peligros.)"
+  },
+  {
+    "id": "Q2",
+    "type": "standard",
+    "question": "Alarm meaning?",
+    "answer": "**Alarm Meaning:**\n\nThe provided documentation does not directly explain what all the alarm codes (E1-E9, EE, Eb, EH, H3, H5, bP) mean without specifying a particular model or situation.\n\nHowever, based on the given sources, here are some specific alarm meanings for each model:\n\nFor **HR652**:\n- E8: Off-lease alarm\n- Other codes (E1-E9, EE, Eb, EH, H3, H5, bP) do not have explicit descriptions in the provided context.\n\nFor **RD98XS**, based on the Alarm Information and specific alarms sections:\n\n- E4: TX unlocked alarm\n- E6: Over-temperature alarm\n- E7: Voltage standing wave ratio (VSWR) alarm\n\nPlease note that without more detailed information, especially for HR652, it's challenging to provide a comprehensive answer. The descriptions provided are based on the available documentation.\n\n**Resumen en Español:** ¿Qué significa la alarma? La documentación proporcionada no explica explícitamente el significado de los códigos de alarma (E1-E9, EE, Eb, EH, H3, H5, bP) sin especificar un modelo o situación en particular. Sin embargo, se pueden encontrar algunos códigos específicos con descripciones: E8 significa \"alarma de desalquilado\" para HR652 y E4, E6 y E7 significan alarmas de TX desbloqueado, temperatura excesiva y VSWR, respectivamente, para RD98XS."
+  },
+  {
+    "id": "Q3",
+    "type": "standard",
+    "question": "Power issue",
+    "answer": "To troubleshoot a power issue with your Rohill device, you can follow these steps based on the provided documentation:\n\nFor RD98XS:\n1. Check if the DC power voltage is too low or too high using a voltmeter.\n   - If yes, replace the DC power supply or use external battery.\n2. Check whether the DC power cord is loose or damaged.\n   - If yes, secure or replace the cord.\n\nFor HR652:\n1. When connected to an external power supply, check if the voltage of the external power supply is within the repeater's operating voltage range using a voltmeter.\n   - If not, replace the power adapter.\n2. Check whether the battery level is low through the battery indicator (if applicable).\n   - If yes, charge or replace the battery.\n\nNote: The documentation does not provide a unified solution for both models. Each model has its unique troubleshooting steps for power-related issues.\n\n**Respuesta breve:** Para solucionar problemas de energía con su dispositivo Rohill, asegúrese de verificar la tensión DC usando un voltímetro y repare o sustituya el suministro de poder si es necesario. Si está conectado a una fuente externa, verifique que la tensión sea dentro del rango operativo del repetidor. También puede verificar el nivel de batería en el indicador de batería (si corresponde)."
+  },
+  {
+    "id": "Q4",
+    "type": "standard",
+    "question": "How do I install it and check if the antenna connection is correct?",
+    "answer": "Based on the provided documentation for HR652 Digital Repeater:\n\n## Step 1: Check TX frequency\nEnsure that the TX frequency is within the frequency range of the antenna. If yes, proceed to step 2.\n\n## Step 2: Check antenna connection\nCheck whether the RF adapter cable, antenna, or feed line is properly connected. \n- If yes, contact your dealer for technical help.\n- If no, re-connect or replace the cable, antenna, or feed line.\n\nThe documentation suggests following these steps to ensure correct installation and antenna connection.\n\nFor RD98XS Digital Repeater, the steps are slightly different:\n1. Check if the connection between the repeater and RF adapter cable or antenna/feed line is loose or damaged.\n- If yes, secure or replace the cable or antenna/feed line.\n- If no, contact your local dealer for technical support.\n\nNote: Based on the documentation provided, it's essential to consult the specific model's guide for detailed installation instructions."
+  },
+  {
+    "id": "Q5",
+    "type": "standard",
+    "question": "The repeater has an alarm and the LED is flashing, what should I check first?",
+    "answer": "The provided documentation does not contain this information."
+  },
+  {
+    "id": "Q6",
+    "type": "specification",
+    "question": "What are the exact operating temperature and storage temperature ranges for the RD98XS?",
+    "answer": "Based on the documentation provided, the operating temperature range for the RD98XS is not explicitly stated. However, it does mention that \"the environment should be a dry and well-ventilated place with ambient temperature of -30°C to +60°C\" in Section 3.1 Installation Requirements.\n\nThe storage temperature range is also mentioned in the same section as being within the same range: \"-30°C to +60°C\".\n\nSo, the exact operating temperature and storage temperature ranges for the RD98XS are:\n\n- Operating temperature: Not explicitly stated\n- Storage temperature: -30°C to +60°C\n\nPlease note that the provided documentation does not provide information on the operating temperature of the device. It only mentions the environmental conditions under which it should be installed.\n\n[Source: RD98XS Digital Repeater — 3.1 Installation Requirements]"
+  },
+  {
+    "id": "Q7",
+    "type": "standard",
+    "question": "What does each front-panel LED state mean on the HR652?",
+    "answer": "Based on the provided documentation, here are the meanings of each front-panel LED state on the HR652:\n\n* Digital mode indicator: Glows blue when the repeater is in digital mode.\n* Analog mode indicator: Glows orange when the repeater is in analog mode.\n* Alarm indicator: Glows red and displays a corresponding alarm code (e.g., E3 for under-voltage, EH for over-voltage) when an exception occurs.\n* Timeslot A TX indicator: Glows red when transmitting in analog mode or when Timeslot A is transmitting in digital mode.\n* Timeslot A RX indicator: Glows green when receiving in analog mode or when Timeslot A is receiving in digital mode.\n* Timeslot B TX indicator: Glows red when Timeslot B is transmitting in digital mode.\n* Timeslot B RX indicator: Glows green when Timeslot B is receiving in digital mode.\n\nNote that these descriptions are based on the documentation for the HR652 Digital Repeater and may not be applicable to other Rohill products, such as RD98XS."
+  },
+  {
+    "id": "Q8",
+    "type": "procedural",
+    "question": "What are the exact steps to install the RD98XS repeater in a rack or cabinet?",
+    "answer": "Based on the provided documentation [Source: RD98XS Digital Repeater — 3.2.2 Installing the Repeater], the steps to install the RD98XS repeater in a rack or cabinet are not explicitly described for this location type. However, we can infer the general installation process from other sections.\n\nTo clarify, you should refer to the specific section that details the installation requirements for a rack or cabinet, which is not provided in the given context.\n\nHowever, based on [Source: RD98XS Digital Repeater — 3.2.2 Installing the Repeater], it seems that the repeater can be installed \"in a rack, bracket, or cabinet, or on a desk\" (Location). \n\nThe exact steps for installing in a rack or cabinet are not mentioned; we know from [Source: RD98XS Digital Repeater — 3.2.1 Installing the Duplexer (Optional)] that some details about connecting and securing the duplexer are provided.\n\nUnfortunately, I must provide more information to safely assist you with this question.\n\nCould you please specify what type of installation is being performed? Is it a new repeater or replacing an existing one in a rack or cabinet?\n\nAdditionally, do you have any specific questions regarding the connection or configuration of the repeater within the rack or cabinet?\n\nThis will help me provide more accurate and relevant information."
+  },
+  {
+    "id": "Q9",
+    "type": "standard",
+    "question": "Which alarm conditions can be triggered by abnormal voltage, overheating, or fan failure on the RD98XS?",
+    "answer": "Based on the provided documentation, the following alarm conditions can be triggered by abnormal voltage, overheating, or fan failure on the RD98XS:\n\n* Over Temperature Alarm (due to overheating): Section 6.4 \"Over Temperature Alarm → Solution\"\n* Fan Failure Alarm: Section 6.3 \"Fan Failure Alarm → Solution\""
+  },
+  {
+    "id": "Q10",
+    "type": "specification",
+    "question": "What voltage or power supply requirements are listed for the HR652 repeater?",
+    "answer": "Based on the provided documentation, the following voltage and power supply requirements are listed for the HR652 repeater:\n\n* The input voltage of the external power supply should be within the operating voltage range (no specific range is specified).\n* The alarm indicator glows red and displays \"E3\" for under-voltage or \"EH\" for over-voltage when the input voltage of the external power supply is out of range.\n* When connected to an external power supply, the repeater is automatically powered by it.\n\nThe documentation does not provide detailed specifications on the acceptable operating voltage range."
+  },
+  {
+    "id": "Q11",
+    "type": "comparison",
+    "question": "What are the main installation differences between the RD98XS and HR652 repeaters?",
+    "answer": "Based on the provided documentation, there are significant installation differences between the RD98XS and HR652 repeaters.\n\n**RD98XS Installation**\n\n1. The duplexer installation is optional for the RD98XS, but it requires a detailed process involving removing the PA module, connecting the RF cable, and fastening the duplexer.\n2. The repeater installation involves placing it in a proper location, connecting accessories (antenna, feed lines, power cords), and grounding through the Ground Screw on the rear panel.\n\n**HR652 Installation**\n\n1. The HR652 has a more straightforward installation process for the repeater itself:\n\t* It can be placed on a desk or installed on a wall.\n\t* For wall installation, specific steps are outlined in Section 4.2.2 of the HR652 documentation, including marking and drilling holes, fixing the bracket to the wall, and docking the pegs onto the back of the repeater.\n2. There is no mention of an optional duplexer installation process for the HR652.\n\n**Comparison Summary**\n\n| **Aspect** | **RD98XS** | **HR652** |\n| --- | --- | --- |\n| Duplexer Installation | Optional, detailed process | Not applicable (no mention) |\n| Repeater Installation Steps | 3 steps: place, connect accessories, ground | 2-4 steps: place on desk or wall, fix bracket to wall, dock pegs onto repeater |\n\nThe documentation does not provide enough information for a direct comparison of other aspects, such as cabling or antenna connections."
+  },
+  {
+    "id": "Q12",
+    "type": "comparison",
+    "question": "Which repeater is more suitable for a compact indoor site in the Netherlands, RD98XS or HR652?",
+    "answer": "Based on the provided context, here's a comparison of the two repeaters to determine which one is more suitable for a compact indoor site in the Netherlands:\n\n**Similarities:**\n\n* Both repeaters are digital repeaters designed for DMR radios.\n* They both have a compact design and can be flexibly mounted or carried.\n\n**Differences:**\n\n| Feature | RD98XS | HR652 |\n| --- | --- | --- |\n| Compactness | The 1U height of RD98XS makes it compact, reducing space requirements. | The HR652 has an unspecified height, but the documentation mentions \"super slim size\" for indoor coverage. |\n| Installation Flexibility | The duplexer installation process for RD98XS is more detailed and specific. | The HR652 does not have a similar section on duplexer installation in the provided context. |\n| Operating Temperature Range | Not specified in the provided context. | -30°C to +60°C, relative humidity ≤ 95% |\n| Voltage Range | Not specified in the provided context. | 12-16.8 V DC |\n\n**Conclusion:**\n\nBased on the provided context, both repeaters can be suitable for a compact indoor site. However, since the RD98XS has more detailed information on duplexer installation and is specifically mentioned to have a compact design, it might be more suitable for a compact indoor site in the Netherlands.\n\nThe HR652's \"super slim size\" could also make it a good option, but without more specific information on its height and operating temperature range, it's difficult to determine its suitability."
+  },
+  {
+    "id": "Q13",
+    "type": "comparison",
+    "question": "Do both RD98XS and HR652 support the same DMR features listed in the Hytera professional catalog?",
+    "answer": "### Comparison of RD98XS and HR652 regarding supported DMR features\n\n| Feature | **RD98XS** | **HR652** |\n| --- | --- | --- |\n| Individual call | [The provided documentation does not contain this information.] | Verified in the context. |\n| Group call | [The provided documentation does not contain this information.] | Verified in the context. |\n| Broadcast call | [The provided documentation does not contain this information.] | Verified in the context. |\n| PSTN call | [The provided documentation does not contain this information.] | Verified in the context. |\n\nThe HR652 supports DMR Trunking SCADA Solution features including individual, group calls, broadcast calls, and PSTN calls.\n\nBased on the given context, there is no explicit information about RD98XS's support for these DMR features."
+  },
+  {
+    "id": "Q14",
+    "type": "standard",
+    "question": "Which accessories or optional components from the catalog are relevant for deploying these repeaters?",
+    "answer": "Based on the provided documentation, the following optional accessories are relevant for deploying RD98XS and HR652 digital repeaters:\n\n* Battery (as mentioned in the HR652 Digital Repeater — 7.1 Battery Unmatched Alarm section)\n* Duplexer (installation instructions are provided in the RD98XS Digital Repeater — 3.2.1 Installing the Duplexer (Optional) section)\n\nIt is also recommended to consult the local dealer for more information on main optional accessories and how to upgrade existing devices to Hytera's iM or iS firmware before using them as part of a system.\n\nFor both models, it is essential to use only Company-specified accessories to avoid any liability for losses or damages arising from unauthorized accessory usage."
+  },
+  {
+    "id": "Q15",
+    "type": "comparison",
+    "question": "Compare the troubleshooting guidance for no transmission or poor coverage between RD98XS and HR652.",
+    "answer": "Based on the provided context, there is a direct comparison possible only for the alarm messages. For other topics such as communication distance and poor audio quality, evidence for one product (HR652) is missing.\n\n**Alarm Messages**\n\n| Alarm Type | RD98XS Guidance | HR652 Guidance |\n| --- | --- | --- |\n| VSWR Alarm | Check TX frequency within antenna range. If not, replace antenna or contact local dealer. <br> Check connection between repeater and RF adapter cable/antenna/feed line. Replace if loose or damaged. | No guidance available for HR652 in the provided context. |\n\n**No Transmission/Poor Coverage**\n\n* RD98XS: No relevant guidance found.\n* HR652: No guidance is available for this topic, as the provided troubleshooting section (Table 8) only addresses specific alarm scenarios related to communication with a radio.\n\nThe provided documentation does not contain sufficient information to directly compare no transmission or poor coverage troubleshooting between the two products."
+  },
+  {
+    "id": "Q16",
+    "type": "procedural",
+    "question": "How do I configure AES-256 encryption keys on the RD98XS using the CPS software?",
+    "answer": "The provided documentation does not contain information about configuring AES-256 encryption keys on the RD98XS using the CPS software."
+  },
+  {
+    "id": "Q17",
+    "type": "standard",
+    "question": "What is the alarm code E47 on the Hytera RD99XS repeater?",
+    "answer": "The provided documentation does not contain any information about the Hytera RD99XS repeater, nor does it mention an alarm code \"E47\". The context only provides information about the RD98XS Digital Repeater. If you are experiencing issues with your RD98XS repeater and would like assistance, please provide the relevant details such as the alarm code displayed on your device or any specific error messages you're seeing."
+  },
+  {
+    "id": "Q18",
+    "type": "standard",
+    "question": "Can the HR652 be used as a 5G base station backup link?",
+    "answer": "The provided documentation does not contain information about using the HR652 as a 5G base station backup link. There is no mention of this specific application or functionality in the provided context."
+  },
+  {
+    "id": "Q19",
+    "type": "standard",
+    "question": "What is the default admin password for the RD98XS web interface?",
+    "answer": "No relevant information was found in the available documentation for this question. Please contact Rohill technical support directly."
+  },
+  {
+    "id": "Q20",
+    "type": "procedural",
+    "question": "How do I waterproof the RD98XS for permanent outdoor pole mounting in heavy rain?",
+    "answer": "The provided documentation does not contain information on waterproofing procedures for the RD98XS digital repeater. The context only covers installation requirements (ambient temperature, relative humidity, and voltage), post-installation checks, adjusting the volume and power level, but not waterproofing or environmental sealing.\n\nTo provide a safe answer, I need more information about the specific situation, such as the model of the pole mount, the expected exposure to rain and weather conditions, or any relevant certifications (e.g., IP66)."
+  }
+]
