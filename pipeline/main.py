@@ -77,7 +77,7 @@ def process_query(question: str,
         expanded_queries,
         metadata_filter=metadata_filter,
         limit_per_query=10,
-        final_limit=20,
+        final_limit=30,
         level="child"
     )
 

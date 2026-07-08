@@ -117,14 +117,25 @@ def hybrid_search(question: str,
 def multi_query_search(queries: list,
                        metadata_filter: dict = None,
                        limit_per_query: int = 10,
-                       final_limit: int = 15,
+                       final_limit: int = 30,
+                       per_query_guarantee: int = 1,
                        level: str = "child") -> list:
     """
-    چند query رو جستجو میکنه، union و dedupe میکنه.
-    پیش‌فرض روی child chunks کار میکنه.
+    Multi-query search with coverage guarantee.
+
+    از هر query، بهترین `per_query_guarantee` نتیجه یکتا تضمین می‌شه.
+
+    دلیل: score های hybrid_search برای هر query جدا محاسبه می‌شن (RRF)،
+    پس مقایسه score مطلق بین query های مختلف بی‌معنیه. بدون این تضمین،
+    chunk ای که در یک reformulation خاص رتبه ۲ داره (مثل "operating
+    voltage" برای "12-16.8 V DC") با sort سراسری حذف می‌شه.
+
+    باقی ظرفیت با score مطلق پر می‌شه.
+    پارامترها برای ablation باز (پیش‌فرض G1/L30).
     """
     seen_ids = set()
-    all_points = []
+    guaranteed = []
+    extras = []
 
     for query in queries:
         try:
@@ -134,16 +145,22 @@ def multi_query_search(queries: list,
                 limit=limit_per_query,
                 level=level
             )
-            for point in results:
-                if point.id not in seen_ids:
-                    seen_ids.add(point.id)
-                    all_points.append(point)
         except Exception:
             continue
 
-    all_points.sort(key=lambda p: p.score, reverse=True)
+        taken = 0
+        for point in results:
+            if point.id in seen_ids:
+                continue
+            seen_ids.add(point.id)
+            if taken < per_query_guarantee:
+                guaranteed.append(point)
+                taken += 1
+            else:
+                extras.append(point)
 
-    return all_points[:final_limit]
+    extras.sort(key=lambda p: p.score, reverse=True)
+    return (guaranteed + extras)[:final_limit]
 
 
 def fetch_parents(child_chunks: list) -> list:
