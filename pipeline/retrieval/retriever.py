@@ -39,10 +39,23 @@ def _extract_product_key(product_name: str) -> str:
     # اگه الگو پیدا نشد، اولین کلمه
     return product_name.split()[0] if product_name.split() else product_name
 
+# Over-fetch factor.
+#
+# RRF produces exact score ties (it is rank-based, not similarity-based).
+# When a tie straddles the limit boundary, Qdrant's choice of which tied
+# result to return is not deterministic. Measured: at limit=10, positions
+# 1-9 were stable across runs while position 10 alternated between two
+# chunks that both scored 0.14285715.
+#
+# Fetching more, applying our own deterministic tie-break, then truncating
+# moves the cut inside a region we control.
+OVERFETCH = 3
+
+
 def hybrid_search(question: str,
                   metadata_filter: dict = None,
                   limit: int = 5,
-                  broad_limit: int = 20,
+                  broad_limit: int = 60,
                   level: str = "child") -> list:
     """
     سوال رو با dense + sparse جستجو می‌کنه و با RRF ترکیب می‌کنه.
@@ -99,7 +112,7 @@ def hybrid_search(question: str,
             )
         ],
         query=FusionQuery(fusion=Fusion.RRF),
-        limit=limit,
+        limit=limit * OVERFETCH,
         with_payload=True
     )
 
@@ -109,9 +122,17 @@ def hybrid_search(question: str,
         quality = p.payload.get("quality_score", 1.0)
         p.score = p.score * quality
 
-    points.sort(key=lambda p: p.score, reverse=True)
+    # Deterministic tie-break by id.
+    #
+    # RRF scores are rank-based, not continuous similarity, so exact ties are
+    # common. Measured (5 runs, identical query): embeddings deterministic,
+    # scores identical, but id ordering varied. Qdrant does not guarantee an
+    # order for ties, and Python's stable sort only preserves the input order,
+    # which is itself non-deterministic. Without this, the variance propagates
+    # into the assembled context and flips the final answer.
+    points.sort(key=lambda p: (-float(p.score), str(p.id)))
 
-    return points
+    return points[:limit]
 
 
 def multi_query_search(queries: list,
@@ -159,7 +180,7 @@ def multi_query_search(queries: list,
             else:
                 extras.append(point)
 
-    extras.sort(key=lambda p: p.score, reverse=True)
+    extras.sort(key=lambda p: (-float(p.score), str(p.id)))
     return (guaranteed + extras)[:final_limit]
 
 
