@@ -23,6 +23,26 @@ from retrieval.reranker import rerank
 from generation.generator import generate_answer
 from generation.answer_classifier import classify_answer_type
 from generation.quality_assessor import assess_retrieval_quality
+from comparison.comparison_builder import _mentioned_products
+from db.connection import get_postgres
+
+
+
+_PRODUCTS_CACHE = None
+
+
+def _get_all_products() -> list:
+    """لیست محصولات از DB، یک بار کش می‌شه."""
+    global _PRODUCTS_CACHE
+    if _PRODUCTS_CACHE is None:
+        pg = get_postgres()
+        cur = pg.cursor()
+        cur.execute(
+            "SELECT DISTINCT product FROM documents WHERE product != 'unknown'"
+        )
+        _PRODUCTS_CACHE = [row["product"] for row in cur.fetchall()]
+        pg.close()
+    return _PRODUCTS_CACHE
 
 
 def process_query(question: str,
@@ -46,27 +66,38 @@ def process_query(question: str,
     expanded_queries = expand_query(rewritten, lang["code"])
     expanded = expanded_queries[0]
 
-    # [۸-ج-پیش] Deterministic comparison detection
+    # [۸-ج] Query analysis (advisory only)
+    analysis = analyze_query(expanded)
+
+    # [۸-د] Deterministic routing guards
+    #
+    # analyzer با temperature=0 پایداره، ولی می‌تونه پایدارِ اشتباه باشه:
+    #   "RD98XS LEDs?"         → product=None      (اسم محصول صریحاً در سواله)
+    #   "Can the HR652...5G?"  → type=comparison   (فقط یک محصول ذکر شده)
+    #
+    # پس فیلدهای پرریسک (product scope, comparison routing) از شواهد لغویِ
+    # سوال اصلی استخراج می‌شن، نه از استنتاج مدل. analyzer فقط مشورتیه.
+    #
+    # نکته: روی question (سوال اصلی) کار می‌کنیم نه expanded — چون expansion
+    # برای retrieval ـه و حق ندارد نیت کاربر را بازنویسی کند.
     COMPARISON_SIGNALS = ["compare", "difference", "differences", "versus",
                           " vs ", "both", "which repeater", "which one",
                           "more suitable", "better for"]
-    _q_lower = expanded.lower()
-    mentions_both_models = (
-        ("rd98" in _q_lower or "rd982" in _q_lower) and
-        ("hr65" in _q_lower or "hr652" in _q_lower)
-    )
-    is_comparison = (
-        any(sig in _q_lower for sig in COMPARISON_SIGNALS) and mentions_both_models
-    ) or mentions_both_models and any(
-        sig in _q_lower for sig in ["suitable", "compare", "difference", "both"]
-    )
 
-    # [۸-ج] Query analysis
-    analysis = analyze_query(expanded)
+    explicit_products = _mentioned_products(question, _get_all_products())
+    comparison_signal = any(s in question.lower() for s in COMPARISON_SIGNALS)
 
-    if is_comparison:
+    # product scope: شواهد لغوی بر استنتاج مدل اولویت دارد
+    if len(explicit_products) == 1:
+        analysis["product"] = explicit_products[0]
+    elif len(explicit_products) >= 2:
+        analysis["product"] = None   # comparison → فیلتر per-product جداگانه
+
+    # comparison routing: نیاز به intent صریح + حداقل دو محصول
+    if comparison_signal and len(explicit_products) >= 2:
         analysis["query_type"] = "comparison"
-        analysis["product"] = None
+    elif analysis["query_type"] == "comparison" and len(explicit_products) < 2:
+        analysis["query_type"] = "standard"   # analyzer اشتباه کرد
 
     # [۹] Retrieval — روی CHILD chunks (hierarchical)
     metadata_filter = None

@@ -17,6 +17,7 @@ Query expansion سه مرحله‌ای:
 ─────────────────────────────────────────────────────────
 """
 
+import re
 import requests
 import config
 from query.synonyms import expand_with_synonyms
@@ -79,7 +80,8 @@ def _translate_to_english(question: str) -> str:
             json={
                 "model": config.DEFAULT_MODEL,
                 "messages": [{"role": "user", "content":
-                              TRANSLATION_PROMPT.format(question=question)}]
+                              TRANSLATION_PROMPT.format(question=question)}],
+                "temperature": 0
             },
             timeout=config.LLM_TIMEOUT
         )
@@ -106,6 +108,41 @@ def _normalize_with_glossary(query: str) -> str:
         if wrong in normalized:
             normalized = normalized.replace(wrong, correct)
     return normalized
+
+
+# خطوط مقدماتی/توضیحی مدل که query نیستن
+_PREAMBLE_MARKERS = (
+    "here are", "here's", "sure", "certainly", "the following",
+    "search quer", "based on", "i've generated", "these quer",
+)
+
+
+def _clean_expansion_line(line: str) -> str:
+    """
+    یک خط از خروجی LLM expansion رو به query تمیز تبدیل می‌کنه،
+    یا رشته خالی برمی‌گردونه اگه query معتبر نباشه.
+
+    مدل جمله مقدماتی ("Here are five search queries...") و شماره‌گذاری
+    اضافه می‌کنه. بدون فیلتر این‌ها به‌عنوان query به retrieval می‌رن
+    و coverage guarantee مجبور می‌شه براشون chunk تضمین کنه.
+    """
+    line = line.strip()
+    if not line:
+        return ""
+    line = re.sub(r'^[-*\u2022]\s*', '', line)
+    line = re.sub(r'^\d+[.\)]\s*', '', line)
+    line = line.strip().strip('"').strip("'").strip()
+    if not line:
+        return ""
+    low = line.lower()
+    if any(low.startswith(m) for m in _PREAMBLE_MARKERS):
+        return ""
+    words = line.split()
+    if len(words) < 2 or len(words) > 15:
+        return ""
+    if line.endswith(":"):
+        return ""
+    return line
 
 
 def expand_query(question: str, language_code: str) -> list:
@@ -152,7 +189,8 @@ def expand_query(question: str, language_code: str) -> list:
             json={
                 "model": config.DEFAULT_MODEL,
                 "messages": [{"role": "user", "content":
-                              LLM_EXPANSION_PROMPT.format(question=question)}]
+                              LLM_EXPANSION_PROMPT.format(question=question)}],
+                "temperature": 0
             },
             timeout=config.LLM_TIMEOUT
         )
@@ -160,7 +198,7 @@ def expand_query(question: str, language_code: str) -> list:
         raw = response.json()["choices"][0]["message"]["content"]
 
         for line in raw.strip().split("\n"):
-            line = line.strip().strip("-").strip()
+            line = _clean_expansion_line(line)
             if line and line not in queries:
                 queries.append(line)
     except Exception:

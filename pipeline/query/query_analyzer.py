@@ -108,7 +108,8 @@ def analyze_query(question: str) -> dict:
         },
         json={
             "model": config.DEFAULT_MODEL,
-            "messages": [{"role": "user", "content": prompt}]
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0
         },
         timeout=config.LLM_TIMEOUT
     )

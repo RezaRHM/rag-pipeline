@@ -28,7 +28,8 @@ def call_llm(prompt: str, model: str = None) -> str:
         },
         json={
             "model": model,
-            "messages": [{"role": "user", "content": prompt}]
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0
         },
         timeout=config.LLM_TIMEOUT
     )
