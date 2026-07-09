@@ -45,6 +45,75 @@ def _get_all_products() -> list:
     return _PRODUCTS_CACHE
 
 
+
+# ─────────────────────────────────────────────────────────
+# Product clarification (deterministic, not prompt-driven)
+# ─────────────────────────────────────────────────────────
+# جواب بعضی سوالات بین محصولات فرق می‌کنه. اگه سوال محصولی نام نبرده
+# و موضوعش product-dependent ـه، به‌جای حدس زدن یا قاطی کردن شواهد دو
+# محصول، clarification می‌خوایم.
+#
+# این تصمیم control-flow ـه، نه generation — پس در کد اعمال می‌شه نه
+# در prompt. قاعده‌ی معادلش (rule 5) قبلاً در prompt بود و مدل 8B
+# بیش‌ازحد اعمالش می‌کرد: حتی برای "RD98XS LEDs?" که اسم محصول اولین
+# کلمه‌ست، clarification می‌خواست.
+
+TOPIC_KEYWORDS = {
+    "alarm":        ["alarm", "error code", "alarm code", "lcd message"],
+    "power":        ["power", "voltage", "battery", "adapter"],
+    "led":          ["led", "indicator", "light"],
+    "installation": ["install", "mount", "rack", "cabinet", "wall"],
+}
+
+CLARIFICATION_TEMPLATES = {
+    "alarm": (
+        "Alarm meanings differ between repeater models. Please specify whether you "
+        "are using the RD98XS or HR652, and provide the alarm code or LCD message."
+    ),
+    "power": (
+        "Power issues can refer to different conditions depending on the model. "
+        "Please specify RD98XS or HR652, and whether the issue is no power, an "
+        "input-voltage alarm, low TX/forward power, or a battery/power-adapter problem."
+    ),
+    "led": (
+        "LED meanings differ by repeater model. Please specify RD98XS or HR652 and, "
+        "if relevant, the LED color or state."
+    ),
+    "installation": (
+        "Installation procedures differ between models. Please specify whether you "
+        "mean the RD98XS or HR652."
+    ),
+}
+
+
+def _detect_clarification_topic(question: str):
+    """موضوع سوال رو تشخیص می‌ده (برای clarification هدفمند)."""
+    low = question.lower()
+    for topic, keywords in TOPIC_KEYWORDS.items():
+        if any(kw in low for kw in keywords):
+            return topic
+    return None
+
+
+def _needs_product_clarification(question: str, explicit_products: list,
+                                 query_type: str) -> bool:
+    """محصول نام برده نشده + موضوع product-dependent → clarification."""
+    if explicit_products:
+        return False
+    if query_type == "comparison":
+        return False
+    return _detect_clarification_topic(question) is not None
+
+
+def _build_product_clarification(question: str) -> str:
+    """clarification هدفمند (نه generic) بر اساس موضوع."""
+    topic = _detect_clarification_topic(question)
+    if topic in CLARIFICATION_TEMPLATES:
+        return CLARIFICATION_TEMPLATES[topic]
+    return ("This answer depends on the repeater model. Please specify whether you "
+            "mean the RD98XS or HR652.")
+
+
 def process_query(question: str,
                   conversation_history: list = None,
                   top_k: int = 5) -> dict:
@@ -98,6 +167,22 @@ def process_query(question: str,
         analysis["query_type"] = "comparison"
     elif analysis["query_type"] == "comparison" and len(explicit_products) < 2:
         analysis["query_type"] = "standard"   # analyzer اشتباه کرد
+
+    # [8-e] Product clarification — before retrieval (saves time)
+    if _needs_product_clarification(question, explicit_products,
+                                    analysis["query_type"]):
+        return {
+            "original_question": question,
+            "language": lang,
+            "rewritten_question": rewritten,
+            "expanded_question": expanded,
+            "expanded_queries": expanded_queries,
+            "query_type": "needs_clarification",
+            "detected_product": None,
+            "answer_type": None,
+            "chunks": [],
+            "clarification": _build_product_clarification(question),
+        }
 
     # [۹] Retrieval — روی CHILD chunks (hierarchical)
     metadata_filter = None
@@ -157,6 +242,14 @@ def ask(question: str, conversation_history: list = None) -> dict:
     from generation.generator import call_llm
 
     retrieval_result = process_query(question, conversation_history)
+
+    # clarification — سوال محصول رو مشخص نکرده و موضوع product-dependent ـه
+    if retrieval_result["query_type"] == "needs_clarification":
+        return {
+            **retrieval_result,
+            "answer": retrieval_result["clarification"],
+            "answer_source": "clarification",
+        }
 
     # comparison
     if retrieval_result["query_type"] == "comparison":
