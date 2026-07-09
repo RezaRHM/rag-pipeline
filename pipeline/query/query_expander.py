@@ -116,6 +116,12 @@ _PREAMBLE_MARKERS = (
     "search quer", "based on", "i've generated", "these quer",
 )
 
+# جملات محاوره‌ای/پایانی که query نیستن
+_CONVERSATIONAL_MARKERS = (
+    "let me know", "hope this", "feel free", "if you need",
+    "note that", "please note", "i hope", "would you like",
+)
+
 
 def _clean_expansion_line(line: str) -> str:
     """
@@ -136,6 +142,11 @@ def _clean_expansion_line(line: str) -> str:
         return ""
     low = line.lower()
     if any(low.startswith(m) for m in _PREAMBLE_MARKERS):
+        return ""
+    if any(m in low for m in _CONVERSATIONAL_MARKERS):
+        return ""
+    # جمله‌ی محاوره‌ای معمولاً با ! یا ? تمام می‌شه (به‌جز خود سوال اصلی)
+    if line.endswith("!"):
         return ""
     words = line.split()
     if len(words) < 2 or len(words) > 15:
