@@ -1,3 +1,4 @@
+import re
 """
 main.py
 ─────────────────────────────────────────────────────────
@@ -29,6 +30,37 @@ from db.connection import get_postgres
 
 
 _PRODUCTS_CACHE = None
+
+
+# ─────────────────────────────────────────────────────────
+# Unknown-product detection
+# ─────────────────────────────────────────────────────────
+# A question can name a product that does not exist in the corpus, e.g.
+# "alarm code E47 on the RD99XS". The lexical matcher correctly finds no
+# known product, but "no known product matched" and "no product named" are
+# different situations:
+#
+#   NO_PRODUCT                  -> ask which model (clarification)
+#   KNOWN_PRODUCT               -> normal route
+#   UNKNOWN_PRODUCT_LIKE_ENTITY -> state that it is not documented
+#
+# Conflating the last two makes the system reply "RD98XS or HR652?" to a
+# question that clearly named RD99XS, implicitly accepting that it exists.
+
+_PRODUCT_PATTERN = re.compile(
+    r'\b(?:RD\d{2,3}[A-Z]{0,2}|HR\d{3}[A-Z]?|HP\d{1,3}[A-Z]?)\b', re.I)
+
+
+def _model_like_tokens(question: str) -> list:
+    """Tokens shaped like a Rohill/Hytera model name, whether known or not."""
+    return _PRODUCT_PATTERN.findall(question)
+
+
+def _unsupported_product_response(mentions: list) -> str:
+    names = ", ".join(sorted({m.upper() for m in mentions}))
+    available = ", ".join(sorted(_get_all_products()))
+    return (f"The available documentation does not cover {names}. "
+            f"Documentation is available for: {available}.")
 
 
 def _get_all_products() -> list:
@@ -168,6 +200,30 @@ def process_query(question: str,
     elif analysis["query_type"] == "comparison" and len(explicit_products) < 2:
         analysis["query_type"] = "standard"   # analyzer اشتباه کرد
 
+    # [8-d] A model-like name that is not in the corpus.
+    #
+    # "No known product matched" is not the same as "no product named".
+    # A question naming RD99XS should be told that model is undocumented,
+    # not asked to choose between RD98XS and HR652 - which would implicitly
+    # accept that RD99XS exists. Checked per token, so a mixed question
+    # ("compare RD98XS and RD99XS") is caught as well.
+    _known = _get_all_products()
+    unknown_models = [m for m in _model_like_tokens(question)
+                      if not _mentioned_products(m, _known)]
+    if unknown_models:
+        return {
+            "original_question": question,
+            "language": lang,
+            "rewritten_question": rewritten,
+            "expanded_question": expanded,
+            "expanded_queries": expanded_queries,
+            "query_type": "unsupported_product",
+            "detected_product": None,
+            "answer_type": None,
+            "chunks": [],
+            "clarification": _unsupported_product_response(unknown_models),
+        }
+
     # [8-e] Product clarification — before retrieval (saves time)
     if _needs_product_clarification(question, explicit_products,
                                     analysis["query_type"]):
@@ -244,11 +300,12 @@ def ask(question: str, conversation_history: list = None) -> dict:
     retrieval_result = process_query(question, conversation_history)
 
     # clarification — سوال محصول رو مشخص نکرده و موضوع product-dependent ـه
-    if retrieval_result["query_type"] == "needs_clarification":
+    if retrieval_result["query_type"] in ("needs_clarification",
+                                          "unsupported_product"):
         return {
             **retrieval_result,
             "answer": retrieval_result["clarification"],
-            "answer_source": "clarification",
+            "answer_source": retrieval_result["query_type"],
         }
 
     # comparison
