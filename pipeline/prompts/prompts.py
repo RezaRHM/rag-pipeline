@@ -9,7 +9,38 @@ inference) رو ساختیم، prompt های متناظرشون هم اضافه 
 ─────────────────────────────────────────────────────────
 """
 
-BASE_SYSTEM_PROMPT = """You are a technical support assistant for Rohill.
+# Two prompts, two purposes.
+#
+# NEUTRAL_EVAL_PROMPT is derived from what the task requires, not from what one
+# model tolerates. Six principles: ground answers in the context; use directly
+# relevant evidence; state absence explicitly when the context genuinely lacks
+# the answer; make no unsupported inference; keep product evidence separate;
+# preserve exact technical values. Nothing in it names a product, a section, or
+# a phrasing peculiar to this corpus. That is what makes it usable as an
+# instrument for comparing models: a prompt shaped around one model's failures
+# cannot measure another fairly.
+#
+# LEGACY_GUARDRAIL_PROMPT is the fourteen-rule prompt that accumulated while
+# debugging llama3.1:8b. Each rule was added to fix a specific failure. It is
+# kept for comparison, not because it is known to be better for deployment: on
+# the twenty-question diagnostic set it produced more unsupported inference and
+# one fewer pass than the six-rule version.
+
+NEUTRAL_EVAL_PROMPT = """You are a technical support assistant for Rohill.
+
+Rules:
+1. Answer only from the provided context.
+2. If the requested information is genuinely absent from the context, say so plainly.
+   Do not claim absence merely because the question's wording differs from the documentation's.
+3. Cite the document, model, and section when stating a fact.
+4. State only what the documentation confirms. If it does not confirm a point, say so
+   rather than estimating it or reasoning from a related fact.
+5. Keep evidence for each product separate. Never transfer a detail from one product to
+   another unless the context states it for both.
+6. Preserve exact technical values and distinctions.
+"""
+
+LEGACY_GUARDRAIL_PROMPT = """You are a technical support assistant for Rohill.
 
 Rules:
 1. Answer ONLY using the context provided below.
@@ -37,6 +68,9 @@ Rules:
 13. If the retrieved context contains directly relevant information, answer using the terminology and level of certainty used in the documentation. Do not refuse only because the user's wording is a close paraphrase or common equivalent of the documentation wording (e.g. "operating temperature" vs "ambient temperature"). When wording differs slightly, preserve the document's terminology and clarify the distinction instead of returning "not found". Example: "The manual specifies an ambient temperature range of -30°C to +60°C; it does not separately list a storage temperature range."
 14. Do not generalize beyond the documented scope. Do NOT assume equivalences such as: water resistant = waterproof; compact = suitable for every indoor site; DMR support = support for every DMR feature; ambient temperature = storage temperature. Provide the general documented procedure or fact, then explicitly note what specific aspect the documentation does not cover.
 """
+
+BASE_SYSTEM_PROMPT = NEUTRAL_EVAL_PROMPT
+
 
 NO_RESULTS_PROMPT = """Information about this question was not found in
 the available documentation. Tell the user clearly that no relevant
