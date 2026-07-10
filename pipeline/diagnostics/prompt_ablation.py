@@ -7,10 +7,10 @@ from main import process_query
 
 CACHE = "diagnostics/frozen_contexts.json"
 
+# Q2/Q3 are handled by the clarification path before retrieval; they never
+# reach the generator, so there is no context to ablate a prompt against.
 SUBSET = {
     "Q1":  "RD98XS LEDs?",
-    "Q2":  "Alarm meaning?",
-    "Q3":  "Power issue",
     "Q8":  "What are the exact steps to install the RD98XS repeater in a rack or cabinet?",
     "Q10": "What voltage or power supply requirements are listed for the HR652 repeater?",
     "Q16": "How do I configure AES-256 encryption keys on the RD98XS using the CPS software?",
