@@ -17,7 +17,7 @@ from query.query_rewriter import rewrite_query
 from query.query_expander import expand_query
 from query.query_analyzer import analyze_query
 from retrieval.retriever import (
-    hybrid_search, multi_query_search, fetch_parents, merge_with_preserved
+    hybrid_search, multi_query_search, fetch_parents, merge_with_preserved, add_heading_parents
 )
 from retrieval.context_expander import expand_context
 from retrieval.reranker import rerank
@@ -276,8 +276,17 @@ def process_query(question: str,
         rerank_parent_budget=top_k - 1,
         final_parent_limit=top_k,
         max_preserved=1,
-        detected_product=analysis.get('detected_product'))
+        detected_product=analysis["product"])
     final_chunks = fetch_parents(merged_children)[:top_k]
+    # [12-c] Heading arm: a parent-level search catches sections whose
+    # child chunks are only table rows (title and prose live in the
+    # parent text, e.g. Packing List, Product Layout).
+    if analysis["product"]:
+        heading_hits = hybrid_search(
+            expanded, metadata_filter=metadata_filter,
+            limit=6, level="parent")
+        final_chunks = add_heading_parents(
+            final_chunks, heading_hits, limit=top_k)
 
     # [۱۳] Answer classification
     answer_type = None

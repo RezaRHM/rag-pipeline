@@ -370,3 +370,61 @@ def merge_with_preserved(reranked, candidates,
         add(c)
 
     return final
+
+
+def add_heading_parents(final_chunks, heading_hits, limit=5, min_score=0.30):
+    """Merge parent-level heading hits into the final set, dropping boilerplate.
+
+    Some sections (Packing List, Product Layout) have children that are only
+    table rows; the title and prose live in the parent, so a parent-level search
+    finds them where child search cannot. When child search returns mostly
+    non-content sections (Preface, Disclaimer, ...), a strong heading hit should
+    replace that filler rather than queue behind it.
+
+    Product is already scoped by the caller's metadata filter. min_score guards
+    against pulling an unrelated section into an otherwise-empty (unsupported)
+    result.
+    """
+    BOILERPLATE = ("preface", "disclaimer", "copyright", "notational",
+                   "notation conventions", "icon conventions", "fcc",
+                   "regulatory", "radiation", "abbreviations",
+                   "instruction conventions", "conformance", "compliance",
+                   "operational instructions and training")
+
+    def is_boilerplate(c):
+        s = c.payload.get("section", "").lower()
+        return any(b in s for b in BOILERPLATE)
+
+    # good heading hits, product already scoped, above threshold, not boilerplate
+    good_hits = []
+    for h in heading_hits:
+        if float(h.score) < min_score:
+            continue
+        if is_boilerplate(h):
+            continue
+        good_hits.append(h)
+
+    seen = {_parent_key(c) for c in final_chunks}
+    new_hits = [h for h in good_hits if _parent_key(h) not in seen]
+
+    if not new_hits:
+        return final_chunks
+
+    # keep content chunks first, then drop trailing boilerplate to make room
+    content = [c for c in final_chunks if not is_boilerplate(c)]
+    filler = [c for c in final_chunks if is_boilerplate(c)]
+
+    out = list(content)
+    for h in new_hits:
+        if len(out) >= limit:
+            break
+        out.append(h)
+        seen.add(_parent_key(h))
+
+    # if still room, restore filler (better than empty slots)
+    for c in filler:
+        if len(out) >= limit:
+            break
+        out.append(c)
+
+    return out[:limit]
