@@ -17,7 +17,7 @@ from query.query_rewriter import rewrite_query
 from query.query_expander import expand_query
 from query.query_analyzer import analyze_query
 from retrieval.retriever import (
-    hybrid_search, multi_query_search, fetch_parents
+    hybrid_search, multi_query_search, fetch_parents, merge_with_preserved
 )
 from retrieval.context_expander import expand_context
 from retrieval.reranker import rerank
@@ -269,8 +269,15 @@ def process_query(question: str,
         reranked_children = filter_repeater_accessories(reranked_children)
 
     # [۱۲] Fetch parents — جایگزینی children با parent های کامل (Small-to-Big)
-    final_chunks = fetch_parents(reranked_children)
-    final_chunks = final_chunks[:top_k]  # به top_k نهایی محدود کن
+    # [12-b] Candidate preservation: rescue top-1-per-query hybrid
+    # hits that a rerank false-negative would otherwise drop.
+    merged_children = merge_with_preserved(
+        reranked_children, expanded_candidates,
+        rerank_parent_budget=top_k - 1,
+        final_parent_limit=top_k,
+        max_preserved=1,
+        detected_product=analysis.get('detected_product'))
+    final_chunks = fetch_parents(merged_children)[:top_k]
 
     # [۱۳] Answer classification
     answer_type = None

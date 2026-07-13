@@ -157,7 +157,7 @@ def multi_query_search(queries: list,
     seen_ids = set()
     guaranteed = []
     extras = []
-
+    best_rank = {}   # chunk id -> best rank achieved across all queries
     for query in queries:
         try:
             results = hybrid_search(
@@ -168,7 +168,10 @@ def multi_query_search(queries: list,
             )
         except Exception:
             continue
-
+        for rank, point in enumerate(results, start=1):
+            prev = best_rank.get(point.id)
+            if prev is None or rank < prev:
+                best_rank[point.id] = rank
         taken = 0
         for point in results:
             if point.id in seen_ids:
@@ -180,6 +183,13 @@ def multi_query_search(queries: list,
             else:
                 extras.append(point)
 
+    # A chunk that reached rank 1 in ANY query is strong evidence, flagged for
+    # preservation against a rerank false-negative. Uses best rank across
+    # queries (not top-1-per-query, which the seen_ids skip could steal from
+    # a strong chunk already seen by an earlier, weaker query).
+    for p in guaranteed + extras:
+        if best_rank.get(p.id, 999) == 1:
+            p.payload["_guaranteed_top1"] = True
     extras.sort(key=lambda p: (-float(p.score), str(p.id)))
     return (guaranteed + extras)[:final_limit]
 
@@ -288,3 +298,75 @@ def filter_repeater_accessories(chunks: list) -> list:
         filtered.append(c)
 
     return filtered if filtered else chunks
+
+def _parent_key(chunk):
+    """Dedupe key at parent/section level."""
+    return (chunk.payload.get("parent_id")
+            or chunk.payload.get("section")
+            or str(chunk.id))
+
+
+def merge_with_preserved(reranked, candidates,
+                         rerank_parent_budget=4,
+                         final_parent_limit=5,
+                         max_preserved=1,
+                         detected_product=None):
+    """Keep rerank winners, then rescue top-1-per-query hybrid hits that a
+    rerank false-negative would otherwise drop.
+
+    A chunk flagged _guaranteed_top1 in multi_query_search was rank 1 for some
+    expanded query. Rerank may reorder it but must not silently eliminate it.
+    Deterministic and parent-deduped.
+    """
+    final = []
+    seen = set()
+
+    def add(c):
+        k = _parent_key(c)
+        if k in seen:
+            return False
+        final.append(c)
+        seen.add(k)
+        return True
+
+    # 1. rerank winners, up to the rerank budget
+    for c in reranked:
+        if len(final) >= rerank_parent_budget:
+            break
+        add(c)
+
+    # 2. preserved candidates: chunks that reached rank 1 in some query but were
+    #    NOT among the rerank winners we just added. A chunk already in `final`
+    #    needs no rescue; a flagged chunk that rerank pushed below the budget is
+    #    exactly what preservation is for. Rank preserved by best rerank
+    #    position so the strongest survivor is rescued first, not an arbitrary
+    #    id-sorted one (a poorly-expanded query can also flag junk).
+    rerank_pos = {}
+    for pos, c in enumerate(reranked):
+        rerank_pos.setdefault(_parent_key(c), pos)
+
+    preserved = [c for c in candidates
+                 if c.payload.get("_guaranteed_top1")
+                 and _parent_key(c) not in seen]
+    if detected_product:
+        preserved = [c for c in preserved
+                     if detected_product.lower()
+                     in c.payload.get("product", "").lower()]
+    # best rerank position first (a flagged chunk rerank ranked 5 beats one it
+    # ranked 20); ties broken by id for reproducibility
+    preserved.sort(key=lambda c: (rerank_pos.get(_parent_key(c), 999), str(c.id)))
+
+    added = 0
+    for c in preserved:
+        if len(final) >= final_parent_limit or added >= max_preserved:
+            break
+        if add(c):
+            added += 1
+
+    # 3. fill any remaining room from the rerank list
+    for c in reranked:
+        if len(final) >= final_parent_limit:
+            break
+        add(c)
+
+    return final
