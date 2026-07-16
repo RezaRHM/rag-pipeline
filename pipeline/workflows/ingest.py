@@ -368,7 +368,7 @@ def maybe_split_large_section(section: dict) -> list:
 
 
 # ── مراحل ۶ تا ۸: Hierarchical Embedding + Indexing ──────
-def ingest_document(pdf_path: Path) -> dict:
+def ingest_document(pdf_path: Path, product_override: str = None) -> dict:
     """یه PDF رو با معماری hierarchical (parent + children) پردازش میکنه."""
     print(f"\n{'=' * 60}")
     print(f"Ingesting: {pdf_path.name}")
@@ -387,6 +387,12 @@ def ingest_document(pdf_path: Path) -> dict:
     # normalize product name — حذف توضیحات داخل پرانتز
     # تا mismatch بین ingestion و query filter پیش نیاد
     metadata["product"] = re.sub(r'\s*\(.*?\)', '', metadata["product"]).strip()
+    # Manual override: the LLM detector can mangle model names (OCR spacing,
+    # multi-variant manuals). When the caller knows the canonical product name,
+    # it wins over the detector.
+    if product_override:
+        print(f"  [override] product: {metadata['product']!r} -> {product_override!r}")
+        metadata["product"] = product_override
     print(f"  product={metadata['product']}, doc_type={metadata['doc_type']}, "
           f"version={metadata['version']}")
 

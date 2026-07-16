@@ -25,6 +25,8 @@ import requests
 import config
 
 from comparison.extractor import extract_structured
+from comparison.product_profile import (
+    has_meaningful_topic, build_no_topic_response)
 from comparison.schemas import (
     detect_aspect,
     get_retrieval_queries,
@@ -114,28 +116,33 @@ def _product_key(product: str) -> str:
 
 def _generic_query(
     search_question: str,
+    products: list = None,
 ) -> str:
-    generic = search_question
+    """Strip product references so retrieval isn't biased toward one model.
 
+    Removes the actual product names and their model keys (from the given
+    product list) rather than guessing with fixed patterns. The old fixed
+    patterns broke on new names: "HR106X" left an "X", "RD982i-S" left an
+    "i-S", turning the query into junk like "compare the X and i-S".
+    """
+    generic = search_question
+    for product in (products or []):
+        generic = re.sub(re.escape(product), "", generic, flags=re.IGNORECASE)
+        key = _product_key(product)
+        # remove the key plus any model suffix left attached (e.g. the "-S" in
+        # "RD982i-S", which _product_key drops). Bounded to a short suffix so it
+        # can't eat the real topic words that follow.
+        generic = re.sub(
+            re.escape(key) + r"[-\w]{0,4}", "", generic, flags=re.IGNORECASE
+        )
     for pattern in [
-        r"RD9\d+X?S?",
-        r"HR\d+",
-        r"HP\d+",
         r"\bvs\b",
         r"compared?\s+to",
         r"difference\s+between",
         r"\bboth\b",
     ]:
-        generic = re.sub(
-            pattern,
-            "",
-            generic,
-            flags=re.IGNORECASE,
-        )
-
-    return " ".join(
-        generic.split()
-    )
+        generic = re.sub(pattern, "", generic, flags=re.IGNORECASE)
+    return " ".join(generic.split())
 
 
 def _retrieve_product_chunks(
@@ -1197,7 +1204,8 @@ def build_comparison(
         }
 
     generic_q = _generic_query(
-        search_question
+        search_question,
+        mentioned,
     )
 
     aspect = detect_aspect(
@@ -1229,6 +1237,13 @@ def build_comparison(
         if use_case is not None:
             return use_case
 
+    # No aspect matched and no meaningful topic remains after stripping
+    # product names/connectives ("compare X and Y"): don't run a free-form
+    # search on an empty query (which returns nothing and wrongly reports
+    # "not documented"). Show each product's documented topics and ask which
+    # aspect to compare.
+    if not has_meaningful_topic(generic_q):
+        return build_no_topic_response(mentioned)
     result = _freeform_comparison(
         mentioned,
         original_question,
