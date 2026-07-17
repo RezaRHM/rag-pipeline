@@ -1072,62 +1072,30 @@ def _structured_comparison(
 # Free-form decomposition fallback
 # ─────────────────────────────────────────────────────────
 
-def _summarize_product(
-    product: str,
-    chunks: list,
-    question: str,
-) -> str:
-    context = "\n\n".join([
-        (
-            f"[{chunk.payload['section']}]\n"
-            f"{chunk.payload['text']}"
-        )
-        for chunk in chunks
-    ])
+def _evidence_block(chunks: list, char_budget: int = 6000) -> str:
+    """Verbatim, section-labelled excerpts for one product.
 
-    prompt = f"""Summarize ONLY the relevant information about {product} from the context,
-to help answer: "{question}"
-
-Rules:
-- Use ONLY the context below.
-- Do not mention any other product.
-- Preserve exact terminology and values.
-- Do not paraphrase technical values.
-- If something is not in the context, do not invent it.
-
-Context:
-{context}
-
-Summary for {product}:"""
-
-    response = requests.post(
-        f"{config.LITELLM_BASE_URL}/v1/chat/completions",
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": (
-                f"Bearer "
-                f"{config.LITELLM_API_KEY}"
-            ),
-        },
-        json={
-            "model": config.DEFAULT_MODEL,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ],
-            "temperature": 0,
-        },
-        timeout=config.LLM_TIMEOUT,
-    )
-
-    response.raise_for_status()
-
-    return (
-        response
-        .json()["choices"][0]["message"]["content"]
-    )
+    Extractive by design: the compare model must see the original wording.
+    The earlier abstractive per-product summary was an information
+    bottleneck — it dropped facts (packing-list items, named alarms) that
+    the final comparison could never recover. Chunks arrive already ranked,
+    so the budget cuts the least relevant section instead of rewriting
+    content.
+    """
+    parts = []
+    used = 0
+    for chunk in chunks:
+        section = chunk.payload.get("section", "?")
+        text = chunk.payload.get("text", "")
+        piece = f"[{section}]\n{text}"
+        if used + len(piece) > char_budget:
+            remaining = char_budget - used
+            if remaining > 400:  # only keep a partial section if meaningful
+                parts.append(piece[:remaining] + "\n[... section truncated]")
+            break
+        parts.append(piece)
+        used += len(piece)
+    return "\n\n".join(parts)
 
 
 def _freeform_comparison(
@@ -1135,7 +1103,10 @@ def _freeform_comparison(
     question: str,
     queries: list,
 ) -> dict:
-    summaries = {}
+    # No intermediate abstractive summary: the compare model reads the
+    # retrieved sections verbatim. Facts survive because nothing rewrites
+    # them between retrieval and comparison.
+    evidence = {}
 
     for product in mentioned:
         chunks = _retrieve_product_chunks(
@@ -1144,49 +1115,50 @@ def _freeform_comparison(
         )
 
         if chunks:
-            summaries[
-                product
-            ] = _summarize_product(
-                product,
-                chunks,
-                question,
-            )
-
+            evidence[product] = _evidence_block(chunks)
         else:
-            summaries[
-                product
-            ] = (
+            evidence[product] = (
                 "[No relevant context retrieved "
                 f"for {product}]"
             )
 
-    summary_block = "\n\n".join([
+    evidence_block = "\n\n".join([
         (
             f"{'=' * 40}\n"
-            f"{product} summary:\n"
+            f"{product} documentation excerpts:\n"
             f"{'=' * 40}\n"
-            f"{summary}"
+            f"{text}"
         )
-        for product, summary
-        in summaries.items()
+        for product, text
+        in evidence.items()
     ])
 
     compare_prompt = (
         BASE_SYSTEM_PROMPT
         + f"""
 
-Compare the products based ONLY on these per-product summaries.
+Compare the products based ONLY on these per-product documentation excerpts.
+Each excerpt is quoted verbatim from that product's own manual, under its
+section name in [brackets].
 
 CRITICAL:
 - Keep each product's details strictly separate.
-- If a detail appears in only one summary, do NOT attribute it to the other.
+- If a detail appears in only one product's excerpts, do NOT attribute it
+  to the other.
 - If something is "not documented" for a product, say exactly:
   "not documented in the retrieved context".
 - Never rephrase missing documentation as "not present", "absent",
   "unsupported", or "the product does not have it".
 - Do not use "likely", "probably", or "can be inferred".
+- Preserve exact values, item names, and code identifiers from the excerpts.
 
-{summary_block}
+Structure your response in exactly this order:
+1. For each product, list the facts from its own excerpts that are relevant
+   to the question, quoting exact item names, values, and codes with their
+   [section].
+2. Then answer the question directly, based only on the facts you listed.
+
+{evidence_block}
 
 Question: {question}
 
