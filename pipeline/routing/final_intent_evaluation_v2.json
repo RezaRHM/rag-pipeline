@@ -1,0 +1,157 @@
+{
+  "accepted": false,
+  "thresholds": {
+    "minimum_macro_f1": 0.9,
+    "minimum_class_recall": 0.9
+  },
+  "sample_count": 80,
+  "class_order": [
+    "standard",
+    "procedural",
+    "comparison",
+    "troubleshooting"
+  ],
+  "confusion_matrix": [
+    [
+      16,
+      1,
+      2,
+      1
+    ],
+    [
+      1,
+      18,
+      0,
+      1
+    ],
+    [
+      3,
+      0,
+      17,
+      0
+    ],
+    [
+      2,
+      0,
+      1,
+      17
+    ]
+  ],
+  "metrics": {
+    "standard": {
+      "precision": 0.7272727272727273,
+      "recall": 0.8,
+      "f1-score": 0.7619047619047619,
+      "support": 20.0
+    },
+    "procedural": {
+      "precision": 0.9473684210526315,
+      "recall": 0.9,
+      "f1-score": 0.9230769230769231,
+      "support": 20.0
+    },
+    "comparison": {
+      "precision": 0.85,
+      "recall": 0.85,
+      "f1-score": 0.85,
+      "support": 20.0
+    },
+    "troubleshooting": {
+      "precision": 0.8947368421052632,
+      "recall": 0.85,
+      "f1-score": 0.8717948717948718,
+      "support": 20.0
+    },
+    "accuracy": 0.85,
+    "macro avg": {
+      "precision": 0.8548444976076556,
+      "recall": 0.8500000000000001,
+      "f1-score": 0.8516941391941392,
+      "support": 80.0
+    },
+    "weighted avg": {
+      "precision": 0.8548444976076555,
+      "recall": 0.85,
+      "f1-score": 0.8516941391941393,
+      "support": 80.0
+    }
+  },
+  "failures": [
+    {
+      "question": "what actions turn off the status display",
+      "expected": "procedural",
+      "predicted": "troubleshooting",
+      "confidence": 0.539176
+    },
+    {
+      "question": "what is required to enable the keypad lock",
+      "expected": "procedural",
+      "predicted": "standard",
+      "confidence": 0.41645
+    },
+    {
+      "question": "QN730 becomes extremely hot while idle",
+      "expected": "troubleshooting",
+      "predicted": "comparison",
+      "confidence": 0.333155
+    },
+    {
+      "question": "display characters are corrupted",
+      "expected": "troubleshooting",
+      "predicted": "standard",
+      "confidence": 0.444272
+    },
+    {
+      "question": "what is causing repeated fuse failure",
+      "expected": "troubleshooting",
+      "predicted": "standard",
+      "confidence": 0.685902
+    },
+    {
+      "question": "does MX260 offer anything that LK880 does not",
+      "expected": "comparison",
+      "predicted": "standard",
+      "confidence": 0.536987
+    },
+    {
+      "question": "is one unit rated for a broader temperature span",
+      "expected": "comparison",
+      "predicted": "standard",
+      "confidence": 0.619415
+    },
+    {
+      "question": "show what is supplied with each repeater",
+      "expected": "comparison",
+      "predicted": "standard",
+      "confidence": 0.771304
+    },
+    {
+      "question": "identify the socket beside the fuse holder",
+      "expected": "standard",
+      "predicted": "procedural",
+      "confidence": 0.274439
+    },
+    {
+      "question": "which company builds the LK880",
+      "expected": "standard",
+      "predicted": "comparison",
+      "confidence": 0.981991
+    },
+    {
+      "question": "does the device satisfy IP54 requirements",
+      "expected": "standard",
+      "predicted": "comparison",
+      "confidence": 0.547723
+    },
+    {
+      "question": "are both timeslot lights blue",
+      "expected": "standard",
+      "predicted": "troubleshooting",
+      "confidence": 0.424929
+    }
+  ],
+  "artifact_sha256": "f0975fa3b65e2327f7d6d221f297230a9a1ad058432bfdba1f4ed0081b4224c8",
+  "test_set_sha256": "ab9304c2dafc2d001ec8d54c87e4b2dc1be5be575ac609ad3f37ae614a903811",
+  "exact_train_test_overlap": [],
+  "normalized_train_test_overlap": []
+}

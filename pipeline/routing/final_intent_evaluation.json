@@ -1,0 +1,133 @@
+{
+  "accepted": false,
+  "thresholds": {
+    "minimum_macro_f1": 0.9,
+    "minimum_class_recall": 0.9
+  },
+  "sample_count": 120,
+  "class_order": [
+    "standard",
+    "procedural",
+    "comparison",
+    "troubleshooting"
+  ],
+  "confusion_matrix": [
+    [
+      27,
+      2,
+      0,
+      1
+    ],
+    [
+      0,
+      30,
+      0,
+      0
+    ],
+    [
+      2,
+      2,
+      25,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      30
+    ]
+  ],
+  "metrics": {
+    "standard": {
+      "precision": 0.9310344827586207,
+      "recall": 0.9,
+      "f1-score": 0.9152542372881356,
+      "support": 30.0
+    },
+    "procedural": {
+      "precision": 0.8823529411764706,
+      "recall": 1.0,
+      "f1-score": 0.9375,
+      "support": 30.0
+    },
+    "comparison": {
+      "precision": 1.0,
+      "recall": 0.8333333333333334,
+      "f1-score": 0.9090909090909091,
+      "support": 30.0
+    },
+    "troubleshooting": {
+      "precision": 0.9375,
+      "recall": 1.0,
+      "f1-score": 0.967741935483871,
+      "support": 30.0
+    },
+    "accuracy": 0.9333333333333333,
+    "macro avg": {
+      "precision": 0.9377218559837728,
+      "recall": 0.9333333333333333,
+      "f1-score": 0.9323967704657289,
+      "support": 120.0
+    },
+    "weighted avg": {
+      "precision": 0.9377218559837728,
+      "recall": 0.9333333333333333,
+      "f1-score": 0.932396770465729,
+      "support": 120.0
+    }
+  },
+  "failures": [
+    {
+      "question": "MR850 against DR450 for an indoor cabinet",
+      "expected": "comparison",
+      "predicted": "procedural",
+      "confidence": 0.311964
+    },
+    {
+      "question": "what advantages does the first have over the second",
+      "expected": "comparison",
+      "predicted": "standard",
+      "confidence": 0.476859
+    },
+    {
+      "question": "how do their alarm indicators differ",
+      "expected": "comparison",
+      "predicted": "troubleshooting",
+      "confidence": 0.380541
+    },
+    {
+      "question": "do they use an identical shutdown procedure",
+      "expected": "comparison",
+      "predicted": "procedural",
+      "confidence": 0.350005
+    },
+    {
+      "question": "which of these products supports battery operation",
+      "expected": "comparison",
+      "predicted": "standard",
+      "confidence": 0.450783
+    },
+    {
+      "question": "how many channels can the unit store",
+      "expected": "standard",
+      "predicted": "procedural",
+      "confidence": 0.380615
+    },
+    {
+      "question": "is BR310 suitable for outdoor installation",
+      "expected": "standard",
+      "predicted": "procedural",
+      "confidence": 0.349172
+    },
+    {
+      "question": "is there a separate receive antenna socket",
+      "expected": "standard",
+      "predicted": "troubleshooting",
+      "confidence": 0.344876
+    }
+  ],
+  "artifact_sha256": "113a8e27efc43772c96ed165a97cf3659d8fe3a15a2ad3740fb5029c09a0bcfc",
+  "test_set_sha256": "2b3c1c60ba7942ad2d9b8ec8556c4ca98bd37a541dd0641f3c5d2b12ad9de8c1",
+  "exact_train_test_overlap": [],
+  "normalized_train_test_overlap": []
+}

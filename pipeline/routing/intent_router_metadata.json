@@ -1,0 +1,68 @@
+{
+  "version": "v3.2",
+  "status": "accepted",
+  "classifier": "TF-IDF char_wb(3,5) + word(1,3) + structural cues + LogisticRegression",
+  "training_samples": 500,
+  "classes": [
+    "standard",
+    "procedural",
+    "comparison",
+    "troubleshooting"
+  ],
+  "dependencies": {
+    "scikit-learn": "1.6.1",
+    "joblib": "1.5.3"
+  },
+  "acceptance_thresholds": {
+    "minimum_macro_f1": 0.9,
+    "minimum_class_recall": 0.9
+  },
+  "final_test": {
+    "samples": 80,
+    "macro_f1": 0.937,
+    "recall": {
+      "standard": 1.0,
+      "procedural": 0.9,
+      "comparison": 0.9,
+      "troubleshooting": 0.95
+    }
+  },
+  "reproducibility": "Predictions are deterministic (fixed random_state + fixed training data + pinned sklearn). The joblib/numpy serialization is NOT byte-identical across rebuilds, so the artifact/evaluation_report sha256 below are integrity fingerprints of the committed build, not a byte-reproducibility guarantee. A rebuild yields the same predictions but a different file hash.",
+  "sha256": {
+    "artifact": "6e22987d5812b3e7f2309aad41e17750d726eab19cae47e72d334d8fb2e0cf06",
+    "training_data": "52ab58655d7b8ab3ba9b1b2d4504793ce8c8fb25f3581b2075b281c6bd8fa1b9",
+    "retired_v1_training_data": "925e389972ccbdf203cde38d352bf5fb1ca249cdd5d9674fb4530f37821afb21",
+    "retired_v2_training_data": "0c34201bc646e8887b404d42be48230bc649cf0419bf0d4319a41fae684d3a0e",
+    "normalizer": "d976e481bd927f2e5e62f250a06c74792f08093accae93b42230766ec572b35b",
+    "training_script": "4ae46cdd8e1bcfc0189e342ea3e933a021fc30a6f4db7af31c948f04ccf331b7",
+    "final_test": "7846a4039dc5e931c2ebe276a55cdbe66865953833a21a6ce90d0a7596143170",
+    "evaluation_report": "c71b1741e371f897d661d2ff4053c95abe1a98bb8fde1e9f378f1c7d0eeb6046"
+  },
+  "post_acceptance_fix": {
+    "reason": "Explicit alarm codes such as E47 were counted as product identifiers",
+    "previous_artifact_sha256": "8e767ac377aa39cc0c6338edfa3724178f030e65d9e1a312dd3c207b767ed511",
+    "final_test_prediction_changes": 0,
+    "targeted_examples": {
+      "What does alarm E47 mean on the RD99XS?": "troubleshooting",
+      "error H25 on AX500": "troubleshooting",
+      "warning code F12 on BX700": "troubleshooting"
+    }
+  },
+  "v3_2_change": {
+    "reason": "Generalized the ad-hoc alarm-code / IP-rating masks into a single corpus-independent TECHNICAL_STANDARD negative layer (IP, USB, CAT, AES, radio-band families) plus a shared is_technical_token() helper, so model-shaped technical identifiers are never counted as products. Retrained on unchanged training data.",
+    "previous_artifact_sha256": "4c8b589605288e02b647bfee301bd866fafa14100ebffa9f504ce86492701092",
+    "final_test": {
+      "macro_f1_before": 0.925,
+      "macro_f1_after": 0.937,
+      "new_failures_introduced": 0,
+      "fixed": [
+        "is UV510 certified to IP55"
+      ]
+    },
+    "targeted_examples": {
+      "Is the RD98XS IP68 rated?": "standard",
+      "Does the HR652 support USB3 and AES256?": "standard",
+      "is UV510 certified to IP55": "standard"
+    }
+  }
+}

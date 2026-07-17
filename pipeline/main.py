@@ -15,7 +15,7 @@ Orchestrator اصلی pipeline — نسخه Hierarchical.
 from language.language_detector import detect_language
 from query.query_rewriter import rewrite_query
 from query.query_expander import expand_query
-from query.query_analyzer import analyze_query
+from routing.intent_router import classify_intent
 from retrieval.retriever import (
     hybrid_search, multi_query_search, fetch_parents, merge_with_preserved, add_heading_parents
 )
@@ -25,11 +25,13 @@ from generation.generator import generate_answer
 from generation.answer_classifier import classify_answer_type
 from generation.quality_assessor import assess_retrieval_quality
 from comparison.comparison_builder import _mentioned_products
+from routing.intent_normalizer import is_technical_token
 from db.connection import get_postgres
 
 
 
 _PRODUCTS_CACHE = None
+_PRODUCT_PATTERN_CACHE = None
 
 
 # ─────────────────────────────────────────────────────────
@@ -47,13 +49,45 @@ _PRODUCTS_CACHE = None
 # Conflating the last two makes the system reply "RD98XS or HR652?" to a
 # question that clearly named RD99XS, implicitly accepting that it exists.
 
-_PRODUCT_PATTERN = re.compile(
-    r'\b(?:RD\d{2,3}[A-Z]{0,2}|HR\d{3}[A-Z]?|HP\d{1,3}[A-Z]?)\b', re.I)
+def _known_family_prefixes() -> set:
+    """Leading-alpha families of the documented products, e.g. {RD, HR, HP}.
+
+    Derived from the live registry, not hardcoded, so a newly documented
+    product with a new prefix (e.g. DS-6250S -> DS) extends detection with no
+    code change here.
+    """
+    prefixes = set()
+    for product in _get_all_products():
+        m = re.match(r'\s*([A-Za-z]{2,})\d', product)
+        if m:
+            prefixes.add(m.group(1).upper())
+    return prefixes
+
+
+def _get_product_pattern() -> re.Pattern:
+    """A model-name matcher whose families come from the product registry.
+
+    Cached alongside the products cache. Falls back to the historical
+    RD/HR/HP families only if the registry is unavailable.
+    """
+    global _PRODUCT_PATTERN_CACHE
+    if _PRODUCT_PATTERN_CACHE is None:
+        prefixes = _known_family_prefixes() or {"RD", "HR", "HP"}
+        alt = "|".join(sorted(prefixes, key=len, reverse=True))
+        _PRODUCT_PATTERN_CACHE = re.compile(
+            rf'\b(?:{alt})\d{{1,4}}[A-Za-z0-9-]{{0,4}}\b', re.I)
+    return _PRODUCT_PATTERN_CACHE
 
 
 def _model_like_tokens(question: str) -> list:
-    """Tokens shaped like a Rohill/Hytera model name, whether known or not."""
-    return _PRODUCT_PATTERN.findall(question)
+    """Tokens shaped like a documented product family, whether known or not.
+
+    Technical standards that share the letters+digits shape (IP68, USB3, ...)
+    are excluded via the shared is_technical_token() negative signal, so they
+    are never mistaken for an undocumented product.
+    """
+    return [tok for tok in _get_product_pattern().findall(question)
+            if not is_technical_token(tok)]
 
 
 def _unsupported_product_response(mentions: list) -> str:
@@ -146,6 +180,14 @@ def _build_product_clarification(question: str) -> str:
             "mean the RD98XS or HR652.")
 
 
+def _build_comparison_clarification(explicit_products: list) -> str:
+    """Ask only for the missing comparison slots; intent stays comparison."""
+    if len(explicit_products) == 1:
+        return (f"You mentioned {explicit_products[0]}. Please specify the other "
+                "product you want to compare it with.")
+    return "Please specify the two products you want to compare."
+
+
 def process_query(question: str,
                   conversation_history: list = None,
                   top_k: int = 5) -> dict:
@@ -167,8 +209,13 @@ def process_query(question: str,
     expanded_queries = expand_query(rewritten, lang["code"])
     expanded = expanded_queries[0]
 
-    # [۸-ج] Query analysis (advisory only)
-    analysis = analyze_query(expanded)
+    # [۸-ج] Deterministic intent classification. Product/entity scope is
+    # resolved separately below; route status is never treated as an intent.
+    intent_result = classify_intent(expanded)
+    analysis = {
+        "query_type": intent_result["intent"],
+        "product": None,
+    }
 
     # [۸-د] Deterministic routing guards
     #
@@ -197,8 +244,20 @@ def process_query(question: str,
     # comparison routing: نیاز به intent صریح + حداقل دو محصول
     if comparison_signal and len(explicit_products) >= 2:
         analysis["query_type"] = "comparison"
-    elif analysis["query_type"] == "comparison" and len(explicit_products) < 2:
-        analysis["query_type"] = "standard"   # analyzer اشتباه کرد
+
+    # Backstop (defense-in-depth against classifier drift and any technical
+    # token the normalizer's TECHNICAL_STANDARD layer does not yet mask): a
+    # comparison intent with no lexical comparison signal AND fewer than two
+    # known products is almost certainly a misclassification driven by a
+    # model-shaped technical code (IP68, USB3, ...). Route it as standard
+    # rather than asking the user to name a second product they never meant.
+    # A genuine comparative phrasing keeps comparison_signal, so cases like
+    # "which is better for outdoor use, the RD98XS?" still ask for the second
+    # product below.
+    elif (analysis["query_type"] == "comparison"
+          and not comparison_signal
+          and len(explicit_products) < 2):
+        analysis["query_type"] = "standard"
 
     # [8-d] A model-like name that is not in the corpus.
     #
@@ -217,11 +276,35 @@ def process_query(question: str,
             "rewritten_question": rewritten,
             "expanded_question": expanded,
             "expanded_queries": expanded_queries,
-            "query_type": "unsupported_product",
+            "query_type": analysis["query_type"],
+            "route_status": "unsupported_product",
             "detected_product": None,
             "answer_type": None,
             "chunks": [],
             "clarification": _unsupported_product_response(unknown_models),
+            "intent_confidence": intent_result["confidence"],
+            "intent_probabilities": intent_result["probabilities"],
+        }
+
+    # Comparison intent and product slots are separate concerns. A missing
+    # side of the comparison changes route status, never the predicted intent.
+    if analysis["query_type"] == "comparison" and len(explicit_products) < 2:
+        return {
+            "original_question": question,
+            "language": lang,
+            "rewritten_question": rewritten,
+            "expanded_question": expanded,
+            "expanded_queries": expanded_queries,
+            "query_type": "comparison",
+            "route_status": "needs_clarification",
+            "detected_product": (
+                explicit_products[0] if len(explicit_products) == 1 else None
+            ),
+            "answer_type": None,
+            "chunks": [],
+            "clarification": _build_comparison_clarification(explicit_products),
+            "intent_confidence": intent_result["confidence"],
+            "intent_probabilities": intent_result["probabilities"],
         }
 
     # [8-e] Product clarification — before retrieval (saves time)
@@ -233,11 +316,14 @@ def process_query(question: str,
             "rewritten_question": rewritten,
             "expanded_question": expanded,
             "expanded_queries": expanded_queries,
-            "query_type": "needs_clarification",
+            "query_type": analysis["query_type"],
+            "route_status": "needs_clarification",
             "detected_product": None,
             "answer_type": None,
             "chunks": [],
             "clarification": _build_product_clarification(question),
+            "intent_confidence": intent_result["confidence"],
+            "intent_probabilities": intent_result["probabilities"],
         }
 
     # [۹] Retrieval — روی CHILD chunks (hierarchical)
@@ -290,7 +376,9 @@ def process_query(question: str,
 
     # [۱۳] Answer classification
     answer_type = None
-    if analysis["query_type"] not in ("procedural", "comparison"):
+    if analysis["query_type"] not in (
+        "procedural", "comparison", "troubleshooting"
+    ):
         answer_type = classify_answer_type(expanded, final_chunks)
 
     return {
@@ -300,6 +388,9 @@ def process_query(question: str,
         "expanded_question": expanded,
         "expanded_queries": expanded_queries,
         "query_type": analysis["query_type"],
+        "route_status": "ready",
+        "intent_confidence": intent_result["confidence"],
+        "intent_probabilities": intent_result["probabilities"],
         "detected_product": analysis["product"],
         "answer_type": answer_type,
         "chunks": final_chunks
@@ -316,12 +407,13 @@ def ask(question: str, conversation_history: list = None) -> dict:
     retrieval_result = process_query(question, conversation_history)
 
     # clarification — سوال محصول رو مشخص نکرده و موضوع product-dependent ـه
-    if retrieval_result["query_type"] in ("needs_clarification",
-                                          "unsupported_product"):
+    if retrieval_result.get("route_status") in (
+        "needs_clarification", "unsupported_product"
+    ):
         return {
             **retrieval_result,
             "answer": retrieval_result["clarification"],
-            "answer_source": retrieval_result["query_type"],
+            "answer_source": retrieval_result["route_status"],
         }
 
     # comparison

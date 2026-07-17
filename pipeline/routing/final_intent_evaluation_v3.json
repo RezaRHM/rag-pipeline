@@ -1,0 +1,115 @@
+{
+  "accepted": true,
+  "thresholds": {
+    "minimum_macro_f1": 0.9,
+    "minimum_class_recall": 0.9
+  },
+  "sample_count": 80,
+  "class_order": [
+    "standard",
+    "procedural",
+    "comparison",
+    "troubleshooting"
+  ],
+  "confusion_matrix": [
+    [
+      20,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      18,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      18,
+      1
+    ],
+    [
+      0,
+      0,
+      1,
+      19
+    ]
+  ],
+  "metrics": {
+    "standard": {
+      "precision": 0.9090909090909091,
+      "recall": 1.0,
+      "f1-score": 0.9523809523809523,
+      "support": 20.0
+    },
+    "procedural": {
+      "precision": 1.0,
+      "recall": 0.9,
+      "f1-score": 0.9473684210526315,
+      "support": 20.0
+    },
+    "comparison": {
+      "precision": 0.9473684210526315,
+      "recall": 0.9,
+      "f1-score": 0.9230769230769231,
+      "support": 20.0
+    },
+    "troubleshooting": {
+      "precision": 0.9047619047619048,
+      "recall": 0.95,
+      "f1-score": 0.926829268292683,
+      "support": 20.0
+    },
+    "accuracy": 0.9375,
+    "macro avg": {
+      "precision": 0.9403053087263613,
+      "recall": 0.9375,
+      "f1-score": 0.9374138912007974,
+      "support": 80.0
+    },
+    "weighted avg": {
+      "precision": 0.9403053087263613,
+      "recall": 0.9375,
+      "f1-score": 0.9374138912007975,
+      "support": 80.0
+    }
+  },
+  "failures": [
+    {
+      "question": "give me directions for wiring the DC input",
+      "expected": "procedural",
+      "predicted": "standard",
+      "confidence": 0.545816
+    },
+    {
+      "question": "what must be done to select low output power",
+      "expected": "procedural",
+      "predicted": "troubleshooting",
+      "confidence": 0.317815
+    },
+    {
+      "question": "fuse opens each time the unit is switched on",
+      "expected": "troubleshooting",
+      "predicted": "comparison",
+      "confidence": 0.754493
+    },
+    {
+      "question": "does UV510 have features missing from PK940",
+      "expected": "comparison",
+      "predicted": "standard",
+      "confidence": 0.466312
+    },
+    {
+      "question": "which repeater delivers greater transmit power",
+      "expected": "comparison",
+      "predicted": "troubleshooting",
+      "confidence": 0.615783
+    }
+  ],
+  "artifact_sha256": "6e22987d5812b3e7f2309aad41e17750d726eab19cae47e72d334d8fb2e0cf06",
+  "test_set_sha256": "7846a4039dc5e931c2ebe276a55cdbe66865953833a21a6ce90d0a7596143170",
+  "exact_train_test_overlap": [],
+  "normalized_train_test_overlap": []
+}
