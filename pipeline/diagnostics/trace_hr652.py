@@ -8,7 +8,7 @@ question = "What are the main installation differences between the RD98XS and HR
 generic = _generic_query(question)
 
 # لایه ۱: chunks
-chunks = _retrieve_product_chunks(product, generic)
+chunks = _retrieve_product_chunks(product, [generic])
 print("="*60)
 print("LAYER 1: RETRIEVED CHUNKS")
 print("="*60)

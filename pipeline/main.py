@@ -430,7 +430,8 @@ def ask(question: str, conversation_history: list = None) -> dict:
             original_question=retrieval_result["original_question"],
             search_question=retrieval_result["expanded_question"],
             products=all_products,
-            top_k=3
+            top_k=3,
+            expanded_queries=retrieval_result.get("expanded_queries"),
         )
         return {
             **retrieval_result,

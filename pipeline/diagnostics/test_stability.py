@@ -4,7 +4,7 @@ from comparison.extractor import extract_structured
 product = "HR652 Digital Repeater"
 question = "What are the main installation differences between the RD98XS and HR652 repeaters?"
 generic = _generic_query(question)
-chunks = _retrieve_product_chunks(product, generic, top_k=3)  # همون context ثابت
+chunks = _retrieve_product_chunks(product, [generic])  # همون context ثابت
 
 print("Running extraction 5x with SAME context (temperature=0)...\n")
 runs = []

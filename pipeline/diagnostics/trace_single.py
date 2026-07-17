@@ -8,7 +8,7 @@ question = "What are the main installation differences between the RD98XS and HR
 generic = _generic_query(question)
 
 # همون top_k فعلی (3) — تا وضعیت فعلی رو ببینیم
-chunks = _retrieve_product_chunks(product, generic, top_k=3)
+chunks = _retrieve_product_chunks(product, [generic])
 
 section_by_id = {}
 parts = []

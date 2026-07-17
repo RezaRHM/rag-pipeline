@@ -12,7 +12,7 @@ targets = {
 for product in ["HR652 Digital Repeater", "RD98XS Digital Repeater"]:
     print(f"\n{'='*55}\n{product}\n{'='*55}")
     for k in [3, 5, 8]:
-        chunks = _retrieve_product_chunks(product, generic, top_k=k)
+        chunks = _retrieve_product_chunks(product, [generic])
         found = {}
         for name, check in targets.items():
             found[name] = any(check(c.payload.get("text","").lower()) for c in chunks)

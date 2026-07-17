@@ -81,6 +81,17 @@ TECHNICAL_SYNONYMS = {
         "IP rating",
         "ingress protection",
         "weatherproofing"
+    ],
+    # Manuals answer "what ships with the unit" under "Packing List";
+    # users ask with "accessories / comes with / in the box". Without this
+    # bridge no ranking mechanism reliably surfaces the Packing List section
+    # (its child chunks are table rows with no searchable prose).
+    "accessories": [
+        "packing list",
+        "supplied items",
+        "included items",
+        "package contents",
+        "standard accessories"
     ]
 }
 

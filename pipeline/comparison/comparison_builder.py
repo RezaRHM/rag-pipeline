@@ -32,10 +32,15 @@ from comparison.schemas import (
     get_retrieval_queries,
 )
 from prompts.prompts import BASE_SYSTEM_PROMPT
+from retrieval.context_expander import expand_context
 from retrieval.reranker import rerank
 from retrieval.retriever import (
     fetch_parents,
     hybrid_search,
+    merge_with_preserved,
+    multi_query_search,
+    _is_boilerplate,
+    _parent_key as _retriever_parent_key,
 )
 
 
@@ -145,43 +150,96 @@ def _generic_query(
     return " ".join(generic.split())
 
 
+def _heading_candidates(
+    queries: list,
+    metadata_filter: dict,
+    per_query_keep: int = 2,
+    max_heading: int = 2,
+    garbage_floor: float = 0.20,
+) -> list:
+    """Parent-level heading hits fused across all query reformulations.
+
+    Boilerplate is dropped per query BEFORE fusion. Fusing first lets
+    sections that weakly match every reformulation (Preface, FCC statements,
+    Disclaimer, ...) drown the section that strongly matches one specific
+    reformulation - which is exactly the hit this arm exists to catch
+    (table-only sections such as Packing List, found via a synonym-expanded
+    query, not via the original phrasing).
+    """
+    best = {}
+    for q in queries:
+        kept = 0
+        for rank, hit in enumerate(hybrid_search(
+                q, metadata_filter=metadata_filter,
+                limit=6, level="parent")):
+            if float(hit.score) < garbage_floor:
+                continue
+            if _is_boilerplate(hit):
+                continue
+            key = _retriever_parent_key(hit)
+            if key not in best or rank < best[key][0]:
+                best[key] = (rank, hit)
+            kept += 1
+            if kept >= per_query_keep:
+                break
+    fused = sorted(best.values(), key=lambda pair: pair[0])
+    return [hit for _, hit in fused][:max_heading]
+
+
 def _retrieve_product_chunks(
     product: str,
-    generic_q: str,
-    top_k: int = 3,
+    queries: list,
+    child_slots: int = 2,
+    heading_slots: int = 2,
 ) -> list:
+    """Free-form evidence retrieval, unified with the main pipeline path.
+
+    Previously a bare single-query hybrid search on a product-stripped query;
+    now the same primitives process_query uses: multi-query child search over
+    all expansions, context expansion, rerank with candidate preservation,
+    and a multi-query heading-parent arm. Heading hits get reserved slots so
+    table-only sections cannot be crowded out by generic content parents.
     """
-    Generic retrieval used only by free-form fallback.
-    """
-    children = hybrid_search(
-        generic_q,
-        metadata_filter={
-            "product": product,
-        },
-        limit=max(
-            top_k * 2,
-            8,
-        ),
+    metadata_filter = {"product": product}
+
+    candidates = multi_query_search(
+        queries,
+        metadata_filter=metadata_filter,
+        limit_per_query=10,
+        final_limit=30,
         level="child",
     )
-
-    if not children:
+    if not candidates:
         return []
 
+    expanded = expand_context(candidates, confidence_threshold=0.70)
     reranked = rerank(
-        generic_q,
-        children,
-        top_k=min(
-            top_k,
-            len(children),
-        ),
+        queries[0],
+        expanded,
+        top_k=max(child_slots * 3, 6),
+        all_queries=queries,
     )
-
-    parents = fetch_parents(
-        reranked
+    merged = merge_with_preserved(
+        reranked,
+        expanded,
+        rerank_parent_budget=child_slots,
+        final_parent_limit=child_slots,
+        max_preserved=1,
+        detected_product=product,
     )
+    finals = fetch_parents(merged)[:child_slots]
 
-    return parents[:top_k]
+    seen = {_retriever_parent_key(c) for c in finals}
+    for hit in _heading_candidates(
+            queries, metadata_filter, max_heading=heading_slots):
+        if _retriever_parent_key(hit) in seen:
+            continue
+        if len(finals) >= child_slots + heading_slots:
+            break
+        finals.append(hit)
+        seen.add(_retriever_parent_key(hit))
+
+    return finals
 
 
 # ─────────────────────────────────────────────────────────
@@ -1075,14 +1133,14 @@ Summary for {product}:"""
 def _freeform_comparison(
     mentioned: list,
     question: str,
-    generic_q: str,
+    queries: list,
 ) -> dict:
     summaries = {}
 
     for product in mentioned:
         chunks = _retrieve_product_chunks(
             product,
-            generic_q,
+            queries,
         )
 
         if chunks:
@@ -1182,6 +1240,7 @@ def build_comparison(
     search_question: str,
     products: list,
     top_k: int = 3,
+    expanded_queries: list = None,
 ) -> dict:
     del top_k
 
@@ -1244,10 +1303,16 @@ def build_comparison(
     # aspect to compare.
     if not has_meaningful_topic(generic_q):
         return build_no_topic_response(mentioned)
+    # Free-form retrieval works on the full natural question plus all its
+    # expansions (synonym + LLM). Product names are NOT stripped: retrieval
+    # is already scoped per product by metadata filter, so stripping only
+    # breaks the sentence ("Do and ship with the same accessories?") and
+    # loses intent-bearing words. generic_q remains only as the no-topic
+    # gate above.
     result = _freeform_comparison(
         mentioned,
         original_question,
-        generic_q,
+        expanded_queries or [original_question],
     )
 
     result["aspect_detected"] = aspect
