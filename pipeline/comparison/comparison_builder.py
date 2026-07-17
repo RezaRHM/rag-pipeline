@@ -24,15 +24,15 @@ import requests
 
 import config
 
-from comparison.extractor import extract_structured
+from comparison.extractor import extract_product_facts, extract_structured
 from comparison.product_profile import (
     has_meaningful_topic, build_no_topic_response)
 from comparison.schemas import (
-    detect_aspect,
     get_retrieval_queries,
 )
 from prompts.prompts import BASE_SYSTEM_PROMPT
 from retrieval.context_expander import expand_context
+from retrieval.embedder import embed_dense
 from retrieval.reranker import rerank
 from retrieval.retriever import (
     fetch_parents,
@@ -241,159 +241,6 @@ def _retrieve_product_chunks(
 
     return finals
 
-
-# ─────────────────────────────────────────────────────────
-# Structured table formatting
-# ─────────────────────────────────────────────────────────
-
-def _format_cell(
-    field_name: str,
-    field: dict,
-) -> str:
-    if not isinstance(field, dict):
-        return "unclear"
-
-    if field_name == "fasteners":
-        status = field.get(
-            "status",
-            "unclear",
-        )
-
-        items = field.get(
-            "items",
-            [],
-        )
-
-        if (
-            status == "documented"
-            and items
-        ):
-            return ", ".join(items)
-
-        if status == "not_documented":
-            return "not documented in retrieved context"
-
-        return "unclear"
-
-    if "value" in field:
-        status = field.get(
-            "status",
-            "",
-        )
-
-        value = field.get(
-            "value"
-        )
-
-        if value:
-            source_term = field.get(
-                "source_term"
-            )
-
-            if (
-                source_term
-                and source_term.lower()
-                not in str(value).lower()
-            ):
-                return (
-                    f"{value} "
-                    f"({source_term})"
-                )
-
-            return str(value)
-
-        if status == "not_documented":
-            return "not documented in retrieved context"
-
-        return "unclear"
-
-    status = field.get(
-        "status",
-        "unclear",
-    )
-
-    if status in (
-        "documented",
-        "confirmed",
-    ):
-        return "✓ documented"
-
-    if status == "not_documented":
-        return "not documented in retrieved context"
-
-    return "unclear"
-
-
-def _build_structured_table(
-    envelopes: dict,
-    aspect: str,
-) -> str:
-    products = list(
-        envelopes.keys()
-    )
-
-    first = next(
-        iter(envelopes.values())
-    )
-
-    field_names = list(
-        first["fields"].keys()
-    )
-
-    lines = [
-        f"**Comparison ({aspect})**\n"
-    ]
-
-    lines.append(
-        "| Field | "
-        + " | ".join(products)
-        + " |"
-    )
-
-    lines.append(
-        "|"
-        + "---|" * (
-            len(products) + 1
-        )
-    )
-
-    for field_name in field_names:
-        cells = [
-            _format_cell(
-                field_name,
-                envelopes[product][
-                    "fields"
-                ].get(
-                    field_name,
-                    {},
-                ),
-            )
-            for product in products
-        ]
-
-        display = (
-            field_name
-            .replace("_", " ")
-            .title()
-        )
-
-        lines.append(
-            f"| {display} | "
-            + " | ".join(cells)
-            + " |"
-        )
-
-    lines.append(
-        "\n*Values extracted separately per product; "
-        "no cross-product inference.*"
-    )
-
-    return "\n".join(lines)
-
-
-# ─────────────────────────────────────────────────────────
-# Parent dedupe
-# ─────────────────────────────────────────────────────────
 
 def _parent_key(parent):
     """
@@ -941,132 +788,6 @@ def _build_catalog_note(
 # Structured quality gate
 # ─────────────────────────────────────────────────────────
 
-def _has_meaningful_extraction(
-    envelope: dict,
-) -> bool:
-    """
-    Reject envelopes that are syntactically valid but entirely unclear.
-    """
-    fields = envelope.get(
-        "fields",
-        {},
-    )
-
-    for field in fields.values():
-        if not isinstance(
-            field,
-            dict,
-        ):
-            continue
-
-        status = field.get(
-            "status"
-        )
-
-        if status in (
-            "documented",
-            "confirmed",
-            "not_documented",
-        ):
-            return True
-
-    return False
-
-
-# ─────────────────────────────────────────────────────────
-# Structured comparison
-# ─────────────────────────────────────────────────────────
-
-def _structured_comparison(
-    mentioned: list,
-    question: str,
-    generic_q: str,
-    aspect: str,
-):
-    """
-    Structured decomposition:
-
-    per-product schema-aware retrieval
-    → per-product extraction
-    → deterministic table
-    → optional catalog reference layer
-    """
-    del generic_q
-
-    envelopes = {}
-
-    for product in mentioned:
-        chunks = _retrieve_schema_aware(
-            product,
-            aspect,
-            question,
-        )
-
-        envelope = extract_structured(
-            product,
-            aspect,
-            question,
-            chunks,
-        )
-
-        if (
-            envelope is None
-            or not _has_meaningful_extraction(
-                envelope
-            )
-        ):
-            return None
-
-        envelopes[
-            product
-        ] = envelope
-
-    answer = _build_structured_table(
-        envelopes,
-        aspect,
-    )
-
-    catalog_used = False
-
-    if _needs_catalog_reference(
-        question,
-        aspect,
-    ):
-        catalog_chunks = _retrieve_catalog_reference(
-            question,
-            aspect,
-        )
-
-        if catalog_chunks:
-            catalog_data = _filter_catalog_for_products(
-                catalog_chunks,
-                mentioned,
-            )
-
-            catalog_note = _build_catalog_note(
-                catalog_data,
-                mentioned,
-                question,
-                aspect,
-            )
-
-            if catalog_note.strip():
-                answer += (
-                    "\n\n**Catalog Reference Note**\n\n"
-                    + catalog_note
-                )
-
-                catalog_used = True
-
-    return {
-        "answer": answer,
-        "products_compared": mentioned,
-        "status": "compared",
-        "method": "structured",
-        "catalog_used": catalog_used,
-        "envelopes": envelopes,
-    }
-
 
 # ─────────────────────────────────────────────────────────
 # Free-form decomposition fallback
@@ -1102,6 +823,7 @@ def _freeform_comparison(
     mentioned: list,
     question: str,
     queries: list,
+    chunks_by_product: dict = None,
 ) -> dict:
     # No intermediate abstractive summary: the compare model reads the
     # retrieved sections verbatim. Facts survive because nothing rewrites
@@ -1109,10 +831,13 @@ def _freeform_comparison(
     evidence = {}
 
     for product in mentioned:
-        chunks = _retrieve_product_chunks(
-            product,
-            queries,
-        )
+        if chunks_by_product is not None:
+            chunks = chunks_by_product.get(product) or []
+        else:
+            chunks = _retrieve_product_chunks(
+                product,
+                queries,
+            )
 
         if chunks:
             evidence[product] = _evidence_block(chunks)
@@ -1204,6 +929,165 @@ Comparison:"""
 
 
 # ─────────────────────────────────────────────────────────
+# Generic fact alignment + deterministic rendering
+# ─────────────────────────────────────────────────────────
+
+NOT_DOCUMENTED = "not documented in the retrieved context"
+
+
+def _label_tokens(label: str) -> set:
+    return set(re.sub(r"[^a-z0-9 ]+", " ", label.lower()).split())
+
+
+def _labels_align(label_a: str, label_b: str) -> bool:
+    """Same comparison criterion? Lexical tier first, then embeddings.
+
+    Tier 1: token Jaccard on normalized labels (catches "packed item" vs
+    "packed items"). Tier 2: dense-embedding cosine via the same BGE-M3
+    model retrieval already uses — no wordlists, no new models. Any
+    embedding failure degrades to "not aligned", which only means the fact
+    is listed per product instead of side by side.
+    """
+    ta, tb = _label_tokens(label_a), _label_tokens(label_b)
+    if not ta or not tb:
+        return False
+    jaccard = len(ta & tb) / len(ta | tb)
+    if jaccard >= 0.5:
+        return True
+    try:
+        va = embed_dense(label_a)
+        vb = embed_dense(label_b)
+        dot = sum(x * y for x, y in zip(va, vb))
+        na = sum(x * x for x in va) ** 0.5
+        nb = sum(x * x for x in vb) ** 0.5
+        if na and nb:
+            return dot / (na * nb) >= 0.78
+    except Exception:
+        pass
+    return False
+
+
+def _question_names_a_fact(question: str, facts_by_product: dict) -> bool:
+    """Signal for choosing deterministic rendering over free-form compare.
+
+    True when some verified fact's VALUE appears verbatim (normalized) in
+    the question — i.e. the user already named the specific criterion
+    ("Phillips screwdriver", "IP68") and extraction verified per product
+    whether it is documented. Broad questions ("compare the alarm code
+    systems") never satisfy this, and go to the free-form compare, which is
+    empirically better at exhaustive enumeration than constrained per-fact
+    extraction on an 8B model. No keyword lists: the signal is computed
+    from the question and the verified facts themselves.
+    """
+    q_norm = re.sub(r"[^a-z0-9]+", "", question.lower())
+    for envelope in facts_by_product.values():
+        if not envelope:
+            continue
+        for fact in envelope["facts"]:
+            v_norm = re.sub(r"[^a-z0-9]+", "", fact["value"].lower())
+            if len(v_norm) >= 5 and v_norm in q_norm:
+                return True
+    return False
+
+
+def _render_fact_comparison(
+    question: str,
+    mentioned: list,
+    facts_by_product: dict,
+) -> dict:
+    """Deterministic comparison rendering from verified facts.
+
+    The table structure is fixed; its ROWS come from the question-conditioned
+    facts, not from a schema file. Facts are aligned across products by label
+    meaning, never by section title. No LLM call: every cell traces to a
+    verified fact with its source section.
+    """
+    # rows: [{label, cells: {product: [facts]}}] — greedy alignment
+    rows = []
+    for product in mentioned:
+        for fact in facts_by_product[product]["facts"]:
+            target = None
+            for row in rows:
+                if product in row["cells"]:
+                    continue
+                if _labels_align(row["label"], fact["label"]):
+                    target = row
+                    break
+            if target is None:
+                # same-label facts of one product stack in one row's cell
+                own = next(
+                    (r for r in rows
+                     if product in r["cells"]
+                     and _labels_align(r["label"], fact["label"])),
+                    None,
+                )
+                if own is not None:
+                    own["cells"][product].append(fact)
+                    continue
+                rows.append({
+                    "label": fact["label"],
+                    "cells": {product: [fact]},
+                })
+            else:
+                target["cells"].setdefault(product, []).append(fact)
+
+    def _cell(row, product):
+        facts = row["cells"].get(product)
+        if not facts:
+            return NOT_DOCUMENTED
+        parts = []
+        for f in facts:
+            sections = ", ".join(dict.fromkeys(f["evidence"]))
+            parts.append(f"{f['value']} ({sections})")
+        return "; ".join(parts)
+
+    # deterministic direct answer from row symmetry
+    asymmetric = [
+        row for row in rows
+        if any(p not in row["cells"] or not row["cells"][p]
+               for p in mentioned)
+    ]
+    if not rows:
+        answer_line = (
+            "Nothing relevant to this question is documented in the "
+            "retrieved context for the compared products."
+        )
+    elif asymmetric:
+        first = asymmetric[0]
+        have = [p for p in mentioned if first["cells"].get(p)]
+        miss = [p for p in mentioned if not first["cells"].get(p)]
+        answer_line = (
+            f"Only {', '.join(have)} documents "
+            f"\"{first['label']}\" ({_cell(first, have[0])}); "
+            f"for {', '.join(miss)} this is {NOT_DOCUMENTED}."
+        )
+    else:
+        answer_line = (
+            "Both products document the compared items; the exact "
+            "documented values are shown side by side below."
+        )
+
+    lines = [f"**Answer:** {answer_line}", ""]
+    if rows:
+        header = "| Compared item | " + " | ".join(mentioned) + " |"
+        sep = "|---" * (len(mentioned) + 1) + "|"
+        lines += [header, sep]
+        for row in rows:
+            cells = " | ".join(_cell(row, p) for p in mentioned)
+            lines.append(f"| {row['label']} | {cells} |")
+        lines += ["", "*Every value is quoted from that product's own "
+                      "manual; sections in parentheses.*"]
+
+    return {
+        "answer": "\n".join(lines),
+        "products_compared": mentioned,
+        "status": "compared",
+        "method": "structured",
+        "catalog_used": False,
+    }
+
+
+# ─────────────────────────────────────────────────────────
 # Public entry point
 # ─────────────────────────────────────────────────────────
 
@@ -1239,23 +1123,8 @@ def build_comparison(
         mentioned,
     )
 
-    aspect = detect_aspect(
-        original_question
-    )
-
-    if aspect:
-        structured = _structured_comparison(
-            mentioned,
-            original_question,
-            generic_q,
-            aspect,
-        )
-
-        if structured is not None:
-            return structured
-
     # use-case / recommendation path
-    # (aspect=None but question is suitability/deployment)
+    # (suitability/deployment questions keep their catalog-aware flow)
     if _needs_catalog_reference(
         original_question,
         None,
@@ -1275,19 +1144,55 @@ def build_comparison(
     # aspect to compare.
     if not has_meaningful_topic(generic_q):
         return build_no_topic_response(mentioned)
-    # Free-form retrieval works on the full natural question plus all its
-    # expansions (synonym + LLM). Product names are NOT stripped: retrieval
-    # is already scoped per product by metadata filter, so stripping only
-    # breaks the sentence ("Do and ship with the same accessories?") and
-    # loses intent-bearing words. generic_q remains only as the no-topic
-    # gate above.
-    result = _freeform_comparison(
-        mentioned,
-        original_question,
-        expanded_queries or [original_question],
-    )
 
-    result["aspect_detected"] = aspect
+    # Single evidence-first path. Retrieval works on the full natural
+    # question plus all its expansions (synonym + LLM). Product names are
+    # NOT stripped: retrieval is already scoped per product by metadata
+    # filter, so stripping only breaks the sentence and loses intent-bearing
+    # words. generic_q remains only as the no-topic gate above.
+    queries = expanded_queries or [original_question]
+    chunks_by_product = {
+        product: _retrieve_product_chunks(product, queries)
+        for product in mentioned
+    }
+
+    # Question-conditioned constrained extraction per product, then
+    # deterministic alignment + rendering. The former aspect->schema route
+    # forced every question into one of three fixed field lists (and its
+    # fastener filter explicitly rejected tools, so "which needs a Phillips
+    # screwdriver" could never be answered). Here the question itself is the
+    # field spec. Extraction parse failure falls back to the free-form
+    # compare over the same retrieved evidence.
+    facts_by_product = {
+        product: extract_product_facts(
+            product, original_question, chunks_by_product[product])
+        for product in mentioned
+    }
+
+    extraction_ok = all(
+        env is not None for env in facts_by_product.values())
+    any_facts = any(
+        env["facts"] for env in facts_by_product.values()
+        if env is not None)
+
+    # Deterministic table only when the question itself names the criterion
+    # (its exact term shows up as a verified fact value). Broad questions go
+    # to the free-form compare, which enumerates far better than
+    # constrained extraction on an 8B model.
+    if (extraction_ok and any_facts
+            and _question_names_a_fact(
+                original_question, facts_by_product)):
+        result = _render_fact_comparison(
+            original_question, mentioned, facts_by_product)
+    else:
+        result = _freeform_comparison(
+            mentioned,
+            original_question,
+            queries,
+            chunks_by_product,
+        )
+
+    result["aspect_detected"] = None
 
     return result
 

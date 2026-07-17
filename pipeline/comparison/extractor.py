@@ -685,6 +685,153 @@ def _validate(
     }
 
 
+def _validate_facts(
+    parsed: dict,
+    product: str,
+    allowed_ids: set,
+    text_by_id: Dict[str, str],
+    max_facts: int = 12,
+) -> Optional[dict]:
+    """Validate a generic fact envelope.
+
+    A fact survives only when it cites valid evidence IDs AND is verifiable
+    against the cited text — either the supporting quote is an exact
+    normalized substring, or the value itself is lexically present.
+    Unverifiable facts are dropped, not demoted: the deterministic renderer
+    must only ever show rows that trace back to the documents.
+    """
+    if not isinstance(parsed, dict):
+        return None
+
+    raw_facts = parsed.get("facts")
+    if not isinstance(raw_facts, list):
+        return None
+
+    clean = []
+    for raw in raw_facts[: max_facts * 2]:
+        if not isinstance(raw, dict):
+            continue
+
+        label = raw.get("label")
+        value = raw.get("value")
+        if not isinstance(label, str) or not label.strip():
+            continue
+        if not isinstance(value, str) or not value.strip():
+            continue
+
+        evidence = _valid_evidence(raw.get("evidence"), allowed_ids)
+        if not evidence:
+            continue
+
+        quote = _clean_optional_quote(
+            raw.get("supporting_quote"), evidence, text_by_id)
+        if quote is None and not _value_supports(
+                value, evidence, text_by_id):
+            continue
+
+        clean.append({
+            "label": " ".join(label.split()),
+            "value": value.strip(),
+            "evidence": evidence,
+            "supporting_quote": quote,
+        })
+        if len(clean) >= max_facts:
+            break
+
+    return {"product": product, "facts": clean}
+
+
+def extract_product_facts(
+    product: str,
+    question: str,
+    chunks: list,
+) -> Optional[dict]:
+    """Question-conditioned fact extraction for one product.
+
+    Generic replacement for the aspect-specific envelopes: the field spec is
+    the question itself, so any comparison topic works without a schema
+    entry. Returns {"product", "facts": [...]} with only verified facts, or
+    None on parse failure (caller falls back to free-form comparison).
+    An empty facts list is a meaningful result: nothing relevant to the
+    question is documented in this product's retrieved context.
+    """
+    if not chunks:
+        return {"product": product, "facts": []}
+
+    section_by_id = {}
+    text_by_id = {}
+    context_parts = []
+    for i, chunk in enumerate(chunks, 1):
+        eid = f"E{i}"
+        section_by_id[eid] = chunk.payload.get("section", "")
+        text_by_id[eid] = chunk.payload.get("text", "")
+        context_parts.append(
+            f"[{eid}] Section: {section_by_id[eid]}\n{text_by_id[eid]}")
+    context = "\n\n".join(context_parts)
+    allowed_ids = set(section_by_id.keys())
+
+    prompt = f"""You are extracting facts about {product} to help answer a comparison question.
+
+Question: {question}
+
+Extract every fact from the context below that is relevant to this question.
+Output STRICT JSON, no other text.
+
+Rules:
+- Use ONLY information explicitly present in the context for {product}.
+- Read the FULL BODY TEXT, not only section headings. Relevant details may appear inside a broadly named section.
+- "label" is a short generic name for what the fact is (e.g. "required tool", "packed item", "alarm code E2 meaning"). Use the same label wording for facts of the same kind.
+- "value" is the exact term, item name, code, or value copied from the text. Do not paraphrase or convert it.
+- "evidence" must contain only section IDs shown in brackets, e.g. ["E1"]. Never invent an ID.
+- "supporting_quote" is best-effort: copy an exact supporting sentence from the cited evidence, or null.
+- If NOTHING in the context is relevant to the question, return an empty facts list. Never invent facts.
+- Do not include facts about any other product.
+
+Output this exact JSON structure:
+{{
+  "product": "{product}",
+  "facts": [
+    {{"label": "...", "value": "...", "evidence": ["E1"], "supporting_quote": "... or null"}}
+  ]
+}}
+
+Context:
+{context}
+
+JSON:"""
+
+    try:
+        response = requests.post(
+            f"{config.LITELLM_BASE_URL}/v1/chat/completions",
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {config.LITELLM_API_KEY}",
+            },
+            json={
+                "model": config.DEFAULT_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0,
+            },
+            timeout=config.LLM_TIMEOUT,
+        )
+        response.raise_for_status()
+        raw = response.json()["choices"][0]["message"]["content"]
+    except Exception:
+        return None
+
+    parsed = _extract_json(raw)
+    if parsed is None:
+        return None
+
+    validated = _validate_facts(
+        parsed, product, allowed_ids, text_by_id)
+    if validated:
+        for fact in validated["facts"]:
+            fact["evidence"] = [
+                section_by_id.get(eid, eid) for eid in fact["evidence"]]
+    return validated
+
+
 def extract_structured(
     product: str,
     aspect: str,
