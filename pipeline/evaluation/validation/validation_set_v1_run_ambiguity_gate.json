@@ -1,0 +1,440 @@
+[
+  {
+    "id": "F1",
+    "category": "factual",
+    "question": "What is the output power of the HR652 in high, middle, and low settings?",
+    "expected": "44/40/30 dBm",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.9137875282603016,
+    "answer_source": "generated",
+    "sections": [
+      "Specifications",
+      "2. Product Layout",
+      "7.5.2 Solution",
+      "5.1 Turn On or Off the Repeater",
+      "Preface"
+    ],
+    "answer": "According to the specifications provided, the output power of the HR652 Digital Repeater is as follows:\n\n* High: 44 dBm\n* Middle: 40 dBm\n* Low: 30 dBm\n\nSource: [Specifications](#Specifications)",
+    "elapsed_seconds": 57.9
+  },
+  {
+    "id": "F2",
+    "category": "factual",
+    "question": "What items are included in the RD98XS packing list?",
+    "expected": "1. Packing List",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.8786948730599685,
+    "answer_source": "generated",
+    "sections": [
+      "1. Packing List",
+      "Notational Conventions",
+      "3.1 Installation Requirements",
+      "3.2.2 Installing the Repeater",
+      "Preface"
+    ],
+    "answer": "According to the provided context, specifically the \"Packing List\" section of the RD98XS Digital Repeater documentation, the following items are included in the packing list:\n\n1. Repeater - 1 unit\n2. Documentation Kit - 1 unit\n\nThere is no mention of any other items being included in the packing list.",
+    "elapsed_seconds": 50.3
+  },
+  {
+    "id": "F3",
+    "category": "factual",
+    "question": "Which connectors are on the rear panel of the RD98XS?",
+    "expected": "2.2 Rear Panel",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.7902833839855026,
+    "answer_source": "generated",
+    "sections": [
+      "2.2 Rear Panel",
+      "3.2.2 Installing the Repeater",
+      "3.2.1 Installing the Duplexer (Optional)",
+      "3.1 Installation Requirements",
+      "3.3 Post-installation Check"
+    ],
+    "answer": "According to the documentation, the following connectors are located on the rear panel of the RD98XS Digital Repeater:\n\n1. TX Antenna Connector (Type-N Female) - No. 1\n2. RX/Duplex Antenna Connector (Type-N Female) - No. 3\n3. Optional Interface 1 - No. 2\n4. Optional Interface 2 - No. 4\n5. Monitor/Tuning Interface - No. 5\n6. Accessory Jack - No. 6\n7. DC Power Inlet - No. 7\n8. Ethernet Port - No. 8\n9. Ground Screw - No. 9",
+    "elapsed_seconds": 68.0
+  },
+  {
+    "id": "F4",
+    "category": "factual",
+    "question": "Can alcohol be used to clean the HR652?",
+    "expected": "No; 9.2 Product Cleaning",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.9308496811026568,
+    "answer_source": "generated",
+    "sections": [
+      "9.2 Product Cleaning",
+      "7.5.2 Solution",
+      "9.1 Product Care",
+      "4.1 Tools",
+      "8. Troubleshooting"
+    ],
+    "answer": "No, according to section 9.2 Product Cleaning in the context, chemical preparations such as stain removers, alcohol, sprays, or oil preparations should not be used to avoid surface case damage.",
+    "elapsed_seconds": 58.3
+  },
+  {
+    "id": "F5",
+    "category": "factual",
+    "question": "What is on the front panel of the HR652?",
+    "expected": "2. Product Layout",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.9787728475091678,
+    "answer_source": "generated",
+    "sections": [
+      "5.2 Switch the Channel",
+      "7.10.1 Description",
+      "7.5.1 Description",
+      "7.6.1 Description",
+      "2. Product Layout"
+    ],
+    "answer": "According to the Product Layout (Section 2), the following components are located on the front panel of the HR652:\n\n1. On-Off key (#10)\n2. Digital mode indicator (#11)\n3. Seven-segment LED (#20)\n4. Volume/Channel up key (#19)\n5. Volume/Channel down key (#21)\n\nThese components are listed as being part of the front panel, which is not explicitly shown in the provided images but can be inferred from the layout diagram.",
+    "elapsed_seconds": 61.0
+  },
+  {
+    "id": "T1",
+    "category": "telegraphic",
+    "question": "HR652 output power?",
+    "expected": "44/40/30 dBm",
+    "intent": "troubleshooting",
+    "route_status": "ready",
+    "intent_confidence": 0.4926617208832633,
+    "answer_source": "generated",
+    "sections": [
+      "Specifications",
+      "7.5.2 Solution",
+      "2. Product Layout",
+      "7.10.1 Description",
+      "7.3.1 Description"
+    ],
+    "answer": "According to the specifications provided in the context, the output power of the HR652 Digital Repeater is as follows:\n\n* High: 44 dBm\n* Middle: 40 dBm\n* Low: 30 dBm\n\nSo, the answer is that the HR652 has three different output power levels: high (44 dBm), middle (40 dBm), and low (30 dBm).",
+    "elapsed_seconds": 42.8
+  },
+  {
+    "id": "T2",
+    "category": "telegraphic",
+    "question": "RD98XS box contents?",
+    "expected": "1. Packing List",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.5268112009874802,
+    "answer_source": "generated",
+    "sections": [
+      "8. Optional Accessories",
+      "3.1 Installation Requirements",
+      "1. Packing List",
+      "2.2 Rear Panel",
+      "Disclaimer"
+    ],
+    "answer": "According to the document \"RD98XS Digital Repeater — 1. Packing List\", the following items are included in the box:\n\n* 1 x Repeater\n* 1 x DC Power Cord\n* 1 x Documentation Kit",
+    "elapsed_seconds": 52.9
+  },
+  {
+    "id": "T3",
+    "category": "telegraphic",
+    "question": "RD98XS rear connectors?",
+    "expected": "2.2 Rear Panel",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.691196498327974,
+    "answer_source": "generated",
+    "sections": [
+      "2.2 Rear Panel",
+      "3.2.2 Installing the Repeater",
+      "3.2.1 Installing the Duplexer (Optional)",
+      "3.1 Installation Requirements",
+      "6. Troubleshooting"
+    ],
+    "answer": "According to the documentation, the rear panel of the RD98XS Digital Repeater has the following connectors:\n\n1. TX Antenna Connector (Type-N Female)\n2. Optional Interface 1\n3. RX/Duplex Antenna Connector (Type-N Female)\n4. Optional Interface 2\n5. Monitor/Tuning Interface\n6. Accessory Jack\n7. DC Power Inlet\n8. Ethernet Port\n9. Ground Screw\n\nThese connectors are listed in the \"Rear Panel\" section of the documentation, specifically in the table labeled \"2.2 Rear Panel\".",
+    "elapsed_seconds": 47.8
+  },
+  {
+    "id": "T4",
+    "category": "telegraphic",
+    "question": "HR652 cleaning alcohol?",
+    "expected": "No; 9.2 Product Cleaning",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.551728311677865,
+    "answer_source": "generated",
+    "sections": [
+      "9.2 Product Cleaning",
+      "7.5.2 Solution",
+      "9.1 Product Care",
+      "4.1 Tools",
+      "10. Optional Accessories"
+    ],
+    "answer": "According to the documentation, using chemical preparations such as stain removers, alcohol, sprays, or oil preparations is not recommended when cleaning the HR652 Digital Repeater. This is stated in section 9.2 Product Cleaning under the subsection \"Use neutral cleanser and a non-woven fabric with neutral cleanser to clean the keys, knobs, display, and connectors after long-time use.\"",
+    "elapsed_seconds": 37.3
+  },
+  {
+    "id": "U1",
+    "category": "unsupported",
+    "question": "What is the RF output power of the RD98XS?",
+    "expected": "Absent; avoid low-TX/100W traps",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.9727575178689754,
+    "answer_source": "generated",
+    "sections": [
+      "3.1 Installation Requirements",
+      "4.3 Adjusting the Power Level",
+      "6.2 TX/RX Unlock Alarm → Solution",
+      "6.3 Fan Failure Alarm → Description",
+      "3.2.1 Installing the Duplexer (Optional)"
+    ],
+    "answer": "The documentation does not provide information about the RF output power of the RD98XS Digital Repeater.",
+    "elapsed_seconds": 52.2
+  },
+  {
+    "id": "U2",
+    "category": "unsupported",
+    "question": "What is the frequency range of the RD98XS?",
+    "expected": "Absent; avoid VSWR antenna-frequency trap",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.9850467795437298,
+    "answer_source": "generated",
+    "sections": [
+      "6.6 Voltage Standing Wave Ratio (VSWR) Alarm → Solution",
+      "3.1 Installation Requirements",
+      "6. Troubleshooting",
+      "RF Radiation Profile",
+      "FCC Statement"
+    ],
+    "answer": "The provided context does not mention the frequency range of the RD98XS Digital Repeater. The information about the VSWR alarm and troubleshooting steps are available, but there is no specific detail regarding the frequency range.",
+    "elapsed_seconds": 64.2
+  },
+  {
+    "id": "U3",
+    "category": "unsupported",
+    "question": "What is the weight of the HR652?",
+    "expected": "Mentioned without a numeric value",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.988959639238738,
+    "answer_source": "generated",
+    "sections": [
+      "EU Regulatory Conformance",
+      "2. Product Layout",
+      "5.3 Adjust the Volume",
+      "5.2 Switch the Channel",
+      "7.5.2 Solution"
+    ],
+    "answer": "I'm sorry, but I am unable to verify the weight of the HR652. The provided documentation does not mention the weight of the device.",
+    "elapsed_seconds": 61.3
+  },
+  {
+    "id": "U4",
+    "category": "unsupported",
+    "question": "Is the RD98XS IP68 rated?",
+    "expected": "Absent; do not transfer HP7 IP68",
+    "intent": "standard",
+    "route_status": "ready",
+    "intent_confidence": 0.9689587782312881,
+    "answer_source": "generated",
+    "sections": [
+      "3.1 Installation Requirements",
+      "4.4 Turning the Backlight On or Off",
+      "6.2 TX/RX Unlock Alarm → Solution",
+      "6.2 TX/RX Unlock Alarm → Description",
+      "Compliance with RF Exposure Standards"
+    ],
+    "answer": "The provided context does not mention the IP rating of the RD98XS Digital Repeater. Therefore, I must say that the information is genuinely absent from the context.",
+    "elapsed_seconds": 35.2
+  },
+  {
+    "id": "A1",
+    "category": "ambiguous",
+    "question": "Cleaning instructions?",
+    "expected": "Optional clarification; both nearly identical",
+    "intent": "procedural",
+    "route_status": "ready",
+    "intent_confidence": 0.9434658689794037,
+    "answer_source": "generated",
+    "sections": [
+      "7.2 Product Cleaning",
+      "9.2 Product Cleaning",
+      "7.2 Product Cleaning",
+      "3.1.1 Environmental Conditions",
+      "9. Care and Cleaning"
+    ],
+    "answer": "For the HR106X Digital Repeater, the cleaning instructions are found in section 7.2 Product Cleaning:\n\n- Clean up the dust and fine particles on the product surface with a clean and dry lint-free cloth or a brush regularly.\n- Use neutral cleanser and a non-woven fabric with neutral cleanser to clean the keys, knobs, display, and connectors after long-time use. Do not use chemical preparations such as stain removers, alcohol, sprays or oil preparations, so as to avoid surface case damage.\n- Make sure the product is completely dry before use.\n\nFor the HR652 Digital Repeater, the cleaning instructions are found in section 9.2 Product Cleaning:\n\n- Clean up the dust and fine particles on the product surface with a clean and dry lint-free cloth or a brush regularly.\n- Use neutral cleanser and a non-woven fabric with neutral cleanser to clean the keys, knobs, display, and connectors after long-time use. Do not use chemical preparations such as stain removers, alcohol, sprays or oil preparations, so as to avoid surface case damage.\n- Make sure the product is completely dry before use.\n\nFor the RD98XS Digital Repeater, the cleaning instructions are found in section 7.2 Product Cleaning:\n\n- Remove the dust and fine particles on the repeater surface with a clean and dry lint-free cloth or a brush regularly.\n- Use a non-woven fabric with neutral cleanser to clean the keys, control knobs, LCD and connectors after long-time use. Do not use chemical preparations such as stain removers, alcohol, sprays or oil preparations.\n- Make sure the product is completely dry before use.\n\nNote that there are slight variations in the instructions between models, but the general guidelines for cleaning are similar across all three products.",
+    "elapsed_seconds": 161.5
+  },
+  {
+    "id": "A2",
+    "category": "ambiguous",
+    "question": "What's in the box?",
+    "expected": "Clarification required",
+    "intent": "standard",
+    "route_status": "needs_clarification",
+    "intent_confidence": 0.5806272284855218,
+    "answer_source": "needs_clarification",
+    "sections": [],
+    "answer": "The answer depends on the product model — \"packed item\" differs between the documented models. Relevant documentation was found for: HR106X Digital Repeater, HR652 Digital Repeater, RD982i-S Digital Repeater, RD98XS Digital Repeater. Please specify which product you mean.",
+    "elapsed_seconds": 110.4
+  },
+  {
+    "id": "A3",
+    "category": "ambiguous",
+    "question": "Antenna connector type?",
+    "expected": "Clarification required",
+    "intent": "standard",
+    "route_status": "needs_clarification",
+    "intent_confidence": 0.5609308519230676,
+    "answer_source": "needs_clarification",
+    "sections": [],
+    "answer": "The answer depends on the product model — \"Antenna connector type\" differs between the documented models. Relevant documentation was found for: HR106X Digital Repeater, HR652 Digital Repeater, RD982i-S Digital Repeater, RD98XS Digital Repeater. Please specify which product you mean.",
+    "elapsed_seconds": 96.6
+  },
+  {
+    "id": "A4",
+    "category": "ambiguous",
+    "question": "Ground screw location?",
+    "expected": "Clarification required",
+    "intent": "troubleshooting",
+    "route_status": "ready",
+    "intent_confidence": 0.3807197961600623,
+    "answer_source": "generated",
+    "sections": [
+      "3.3 Installation Procedure",
+      "3.2.2 Installing the Repeater",
+      "3.2.2 Installing the Repeater",
+      "3.2.1 Installing the Duplexer (Optional)",
+      "FCC Statement"
+    ],
+    "answer": "According to the documentation, the ground screw is located on the rear panel of the repeater. This can be found in the following sections:\n\n* HR106X Digital Repeater — 3.3 Installation Procedure (Section 4)\n* RD982i-S Digital Repeater — 3.2.2 Installing the Repeater (Section 3)\n* RD98XS Digital Repeater — 3.2.2 Installing the Repeater (Section 3)\n\nIn all three sections, it is stated that the ground screw is located on the rear panel of the repeater.",
+    "elapsed_seconds": 108.9
+  },
+  {
+    "id": "M2",
+    "category": "multi_section",
+    "question": "Before cleaning the RD98XS, what to do first and what to avoid?",
+    "expected": "RD98XS section 7.2",
+    "intent": "procedural",
+    "route_status": "ready",
+    "intent_confidence": 0.4002819726484894,
+    "answer_source": "generated",
+    "sections": [
+      "7.2 Product Cleaning",
+      "7.1 Product Care",
+      "6.2 TX/RX Unlock Alarm → Solution",
+      "7. Care and Cleaning",
+      "Preface"
+    ],
+    "answer": "To clean the RD98XS, you should first power off the product. \n\nBefore cleaning, it is recommended to avoid using chemical preparations such as stain removers, alcohol, sprays or oil preparations on the keys, control knobs, LCD, and connectors.",
+    "elapsed_seconds": 37.8
+  },
+  {
+    "id": "M3",
+    "category": "multi_section",
+    "question": "Steps to install the RD98XS and confirm it works afterward?",
+    "expected": "Sections 3.2.2 and 3.3",
+    "intent": "procedural",
+    "route_status": "ready",
+    "intent_confidence": 0.9556113104695534,
+    "answer_source": "generated",
+    "sections": [
+      "3.3 Post-installation Check",
+      "3.2.1 Installing the Duplexer (Optional)",
+      "3.2.2 Installing the Repeater",
+      "3. Installation",
+      "3.1 Installation Requirements"
+    ],
+    "answer": "To install the RD98XS Digital Repeater, follow these steps:\n\n1. Place the repeater in a proper location (Source: RD98XS Digital Repeater — 3.2.2 Installing the Repeater).\n2. Connect accessories including the antenna, feed lines, and power cords to the repeater (Source: RD98XS Digital Repeater — 3.2.2 Installing the Repeater).\n3. Ground the repeater through the Ground Screw located on the rear panel (Source: RD98XS Digital Repeater — 3.2.2 Installing the Repeater).\n\nIf you want to install a duplexer, follow these additional steps:\n\n1. Install the duplexer into the repeater according to the diagrams and steps provided in Section 3.2.1 (Source: RD98XS Digital Repeater — 3.2.1 Installing the Duplexer (Optional)).\n2. Mount the duplexer on the exciter module and receiver module of the repeater, and then fasten it with the two screws inside the housing and the two screws on the side of the housing (Source: RD98XS Digital Repeater — 3.2.1 Installing the Duplexer (Optional)).\n\nAfter installation, power on the repeater and check whether it works properly by observing the nine LED indicators and the LCD display in the front panel (Source: RD98XS Digital Repeater — 3.3 Post-installation Check).",
+    "elapsed_seconds": 65.7
+  },
+  {
+    "id": "M4",
+    "category": "multi_section",
+    "question": "After installing the RD98XS, confirm power-on and what the LEDs mean?",
+    "expected": "Sections 3.3 and 5.2",
+    "intent": "troubleshooting",
+    "route_status": "ready",
+    "intent_confidence": 0.4801439221903503,
+    "answer_source": "generated",
+    "sections": [
+      "3.3 Post-installation Check",
+      "5.2 Checking LED Indications",
+      "4.1 Turning the Repeater On or Off",
+      "4.3 Adjusting the Power Level",
+      "3. Installation"
+    ],
+    "answer": "After installing the RD98XS Digital Repeater, you should confirm that it is powered on by checking the Power Indicator. According to Section 4.1 of the documentation, \"During power-up process, the Power Indicator glows green.\"\n\nTo understand the meaning of the other LEDs, refer to Section 5.2 Checking LED Indications:\n\n* The Alarm Indicator (Red) indicates abnormal operation and an alarm pops up.\n* The Operation Status Indicator (Green or Off) shows whether the repeater is operating in Repeater mode (green) or Base mode (off).\n* The Digital Mode Indicator (Blue) indicates that the repeater is operating in Digital mode.\n* The Analog Mode Indicator (Yellow) indicates that the repeater is operating in Analog mode.\n* Timeslot 1 TX and RX Indicators show transmission and reception status for timeslot 1, depending on whether the repeater is in Analog or Digital mode.\n* Timeslot 2 TX and RX Indicators show transmission and reception status for timeslot 2, only when the repeater is in Digital mode.\n\nBy observing these indicators, you can confirm that the RD98XS is working properly after installation.",
+    "elapsed_seconds": 64.9
+  },
+  {
+    "id": "C1",
+    "category": "comparison",
+    "question": "Do RD98XS and HR652 ship with the same accessories?",
+    "expected": "Packing lists for both",
+    "intent": "comparison",
+    "route_status": "ready",
+    "intent_confidence": 0.9888617847508798,
+    "answer_source": "comparison",
+    "sections": [
+      "10. Optional Accessories",
+      "2. Product Layout",
+      "7.1 Battery Unmatched Alarm",
+      "7.9.1 Description",
+      "3.1 Installation Requirements"
+    ],
+    "answer": "**HR652 Digital Repeater**\n\n1. The HR652 ships with a Power Cord (1 PCS) ([1. Packing List])\n2. The HR652 ships with a Documentation Kit (1 PCS) ([1. Packing List])\n\n**RD98XS Digital Repeater**\n\n1. The RD98XS ships with a DC Power Cord (1 PCS) ([1. Packing List])\n2. The RD98XS ships with a Documentation Kit (1 PCS) ([1. Packing List])\n\nBased on the facts, both repeaters ship with a Documentation Kit and a power cord, but they are different types of power cords: HR652 has a Power Cord, while RD98XS has a DC Power Cord. Therefore, it can be concluded that they do not ship with the same accessories.",
+    "elapsed_seconds": 150.2
+  },
+  {
+    "id": "C2",
+    "category": "comparison",
+    "question": "Which repeater documents its output power?",
+    "expected": "HR652 yes; RD98XS no",
+    "intent": "comparison",
+    "route_status": "needs_clarification",
+    "intent_confidence": 0.4843803484746357,
+    "answer_source": "needs_clarification",
+    "sections": [],
+    "answer": "Please specify the two products you want to compare.",
+    "elapsed_seconds": 10.9
+  },
+  {
+    "id": "C3",
+    "category": "comparison",
+    "question": "Which repeater needs a Phillips screwdriver, RD98XS or HR652?",
+    "expected": "Evidence from both manuals",
+    "intent": "comparison",
+    "route_status": "ready",
+    "intent_confidence": 0.89225593720389,
+    "answer_source": "comparison",
+    "sections": [
+      "3.1 Installation Requirements",
+      "4.1 Tools",
+      "7.9.1 Description",
+      "Notation Conventions",
+      "3.2.1 Preparing the Tools"
+    ],
+    "answer": "**Answer:** Both products document the compared items; the exact documented values are shown side by side below.\n\n| Compared item | HR652 Digital Repeater | RD98XS Digital Repeater |\n|---|---|---|\n| required tool | Phillips screwdriver (4.2 Procedure → Remove the decorative cover.) | Phillips screwdriver (3.1 Installation Requirements) |\n\n*Every value is quoted from that product's own manual; sections in parentheses.*",
+    "elapsed_seconds": 103.8
+  },
+  {
+    "id": "C4",
+    "category": "comparison",
+    "question": "Compare the alarm code systems of the RD98XS and HR652.",
+    "expected": "RD98XS named alarms vs HR652 E-codes",
+    "intent": "comparison",
+    "route_status": "ready",
+    "intent_confidence": 0.9626451338137278,
+    "answer_source": "comparison",
+    "sections": [
+      "6.2 Seven-Segment LED → Alarm Code",
+      "6.1 LED Indicator",
+      "6.3 Fan Failure Alarm → Description",
+      "7.3.1 Description",
+      "6.2 Seven-Segment LED → Channel Code"
+    ],
+    "answer": "**HR652 Digital Repeater**\n\n1. The alarm codes are listed in [6.2 Seven-Segment LED → Alarm Code].\n2. The alarm codes include:\n\t* E1: Battery unmatched alarm\n\t* E2: Low battery alarm\n\t* E3: External power under-voltage alarm\n\t* E4: TX unlocked alarm\n\t* E5: RX unlocked alarm\n\t* E6: Over-temperature alarm\n\t* E7: Voltage standing wave ratio (VSWR) alarm\n\t* E8: Off-lease alarm\n\t* E9: Secondary repeater unregistered alarm\n\t* EE: Repeater disabled alarm\n\t* Eb: Low forward power alarm\n\t* EH: External power over-voltage alarm\n\t* H3: Network IP conflict alarm\n\t* H5: Invalid network IP alarm\n\t* bP: Backup alarm\n\n**RD98XS Digital Repeater**\n\n1. The alarm codes are not explicitly listed in the provided excerpts, but the [6.2 TX/RX Unlock Alarm → Solution] section mentions a \"TX/RX Unlock\" alarm.\n2. The [5.1 Checking LCD Indications] section lists icons for various conditions, including:\n\t* Low TX power\n\t* High TX power\n\t* An accessory is connected\n\t* An alarm message is given\n\t* GPS signals do not synchronize with satellite signals\n\t* GPS signals synchronize with satellite signals\n\t* Repeater Mode (RM)\n\t* Monitor feature enabled\n\t* Scrambler/Encrypt feature enabled\n\t* Scan in progress\n\t* Speaker unmuted\n\t* Repeater connected to the network\n\t* Repeater disconnected from the network\n\t* Network cable removed\n\n**Comparison**\n\nThe HR652 has a more extensive list of alarm codes, including specific conditions such as battery unmatched and off-lease alarms. The RD98XS does not have an explicit list of alarm codes but mentions a \"TX/RX Unlock\" alarm in one section. The RD98XS also has icons for various conditions, but these are not directly comparable to the alarm codes on the HR652.\n\nTherefore, based on the provided excerpts, it appears that the HR652 has a more comprehensive and detailed alarm code system compared to the RD98XS.",
+    "elapsed_seconds": 229.9
+  }
+]
