@@ -25,6 +25,11 @@ inference) رو ساختیم، prompt های متناظرشون هم اضافه 
 # kept for comparison, not because it is known to be better for deployment: on
 # the twenty-question diagnostic set it produced more unsupported inference and
 # one fewer pass than the six-rule version.
+#
+# NOTE: the legacy prompt is corpus-coupled by construction — rules 10 and 11
+# name RD98XS/HR652/HP-series and predate the five-document corpus. That is
+# acceptable for a frozen benchmarking artifact, but it must never be wired
+# back into the pipeline; BASE_SYSTEM_PROMPT stays on the neutral prompt.
 
 NEUTRAL_EVAL_PROMPT = """You are a technical support assistant for Rohill.
 

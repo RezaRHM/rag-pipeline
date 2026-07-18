@@ -44,7 +44,29 @@ from retrieval.retriever import (
 )
 
 
-CATALOG_PRODUCT_LABEL = "HP7 SERIES"
+_CATALOG_LABEL_CACHE = None
+
+
+def _catalog_product_label():
+    """The catalog document's product label, from the registry (doc_type),
+    not hardcoded. Falls back to the historical label only if the registry
+    has no catalog-typed document."""
+    global _CATALOG_LABEL_CACHE
+    if _CATALOG_LABEL_CACHE is None:
+        try:
+            from db.connection import get_postgres
+            pg = get_postgres()
+            cur = pg.cursor()
+            cur.execute(
+                "SELECT DISTINCT product FROM documents "
+                "WHERE doc_type = 'catalog' LIMIT 1"
+            )
+            row = cur.fetchone()
+            pg.close()
+            _CATALOG_LABEL_CACHE = row["product"] if row else "HP7 SERIES"
+        except Exception:
+            _CATALOG_LABEL_CACHE = "HP7 SERIES"
+    return _CATALOG_LABEL_CACHE
 
 KNOWN_PRODUCT_KEYS = [
     "RD98XS",
@@ -454,7 +476,7 @@ def _retrieve_catalog_reference(
         children = hybrid_search(
             query,
             metadata_filter={
-                "product": CATALOG_PRODUCT_LABEL,
+                "product": _catalog_product_label(),
             },
             limit=10,
             level="child",
@@ -1106,11 +1128,15 @@ def build_comparison(
     )
 
     if len(mentioned) < 2:
+        # example names come from the live registry, not from a template
+        example_keys = [_product_key(p) for p in products[:2]]
+        example = (f" (e.g. {example_keys[0]} and {example_keys[1]})"
+                   if len(example_keys) >= 2 else "")
         return {
             "answer": (
                 "This comparison needs at least two clearly specified "
                 "products. Please specify which products you want to "
-                "compare (e.g. RD98XS and HR652)."
+                f"compare{example}."
             ),
             "products_compared": mentioned,
             "status": "needs_clarification",
