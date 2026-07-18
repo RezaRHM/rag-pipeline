@@ -16,6 +16,7 @@ from language.language_detector import detect_language
 from query.query_rewriter import rewrite_query
 from query.query_expander import expand_query
 from routing.intent_router import classify_intent
+from routing.ambiguity_gate import assess_product_scope
 from retrieval.retriever import (
     hybrid_search, multi_query_search, fetch_parents, merge_with_preserved, add_heading_parents
 )
@@ -113,71 +114,32 @@ def _get_all_products() -> list:
 
 
 # ─────────────────────────────────────────────────────────
-# Product clarification (deterministic, not prompt-driven)
+# Product-scope clarification (evidence-driven, post-retrieval)
 # ─────────────────────────────────────────────────────────
-# جواب بعضی سوالات بین محصولات فرق می‌کنه. اگه سوال محصولی نام نبرده
-# و موضوعش product-dependent ـه، به‌جای حدس زدن یا قاطی کردن شواهد دو
-# محصول، clarification می‌خوایم.
+# جواب بعضی سوالات بین محصولات فرق می‌کنه. اگه سوال محصولی نام نبرده،
+# به‌جای حدس زدن یا قاطی کردن شواهد چند محصول، از شواهدِ بازیابی‌شده
+# می‌پرسیم: مقدارهای مستندشده‌ی محصولات با هم توافق دارند یا نه؟
 #
-# این تصمیم control-flow ـه، نه generation — پس در کد اعمال می‌شه نه
-# در prompt. قاعده‌ی معادلش (rule 5) قبلاً در prompt بود و مدل 8B
-# بیش‌ازحد اعمالش می‌کرد: حتی برای "RD98XS LEDs?" که اسم محصول اولین
-# کلمه‌ست، clarification می‌خواست.
-
-TOPIC_KEYWORDS = {
-    "alarm":        ["alarm", "error code", "alarm code", "lcd message"],
-    "power":        ["power", "voltage", "battery", "adapter"],
-    "led":          ["led", "indicator", "light"],
-    "installation": ["install", "mount", "rack", "cabinet", "wall"],
-}
-
-CLARIFICATION_TEMPLATES = {
-    "alarm": (
-        "Alarm meanings differ between repeater models. Please specify whether you "
-        "are using the RD98XS or HR652, and provide the alarm code or LCD message."
-    ),
-    "power": (
-        "Power issues can refer to different conditions depending on the model. "
-        "Please specify RD98XS or HR652, and whether the issue is no power, an "
-        "input-voltage alarm, low TX/forward power, or a battery/power-adapter problem."
-    ),
-    "led": (
-        "LED meanings differ by repeater model. Please specify RD98XS or HR652 and, "
-        "if relevant, the LED color or state."
-    ),
-    "installation": (
-        "Installation procedures differ between models. Please specify whether you "
-        "mean the RD98XS or HR652."
-    ),
-}
+# نسخه‌ی قبلی یک topic keyword list و قالب‌های clarification با نام
+# محصولِ hardcoded داشت (RD98XS or HR652) — پوشش ناقص بود (packing
+# list/connector/ground screw اصلاً گیت نمی‌شدند) و با corpus پنج‌محصولی
+# به کاربر گزینه‌های غلط می‌داد. حالا تصمیم و پیام هر دو از خود شواهد
+# و registry ساخته می‌شوند. منطق تصمیم: routing/ambiguity_gate.py
 
 
-def _detect_clarification_topic(question: str):
-    """موضوع سوال رو تشخیص می‌ده (برای clarification هدفمند)."""
-    low = question.lower()
-    for topic, keywords in TOPIC_KEYWORDS.items():
-        if any(kw in low for kw in keywords):
-            return topic
-    return None
-
-
-def _needs_product_clarification(question: str, explicit_products: list,
-                                 query_type: str) -> bool:
-    """محصول نام برده نشده + موضوع product-dependent → clarification."""
-    if explicit_products:
-        return False
-    if query_type == "comparison":
-        return False
-    return _detect_clarification_topic(question) is not None
-
-
-def _build_product_clarification(question: str) -> str:
-    """clarification هدفمند (نه generic) بر اساس موضوع."""
-    topic = _detect_clarification_topic(question)
-    if topic in CLARIFICATION_TEMPLATES:
-        return CLARIFICATION_TEMPLATES[topic]
-    return ("This answer depends on the repeater model. Please specify whether you "
-            "mean the RD98XS or HR652.")
+def _build_scope_clarification(scope: dict) -> str:
+    """Clarification built from the evidence, never from templates."""
+    products = ", ".join(sorted(scope.get("products", [])))
+    diverging = scope.get("diverging") or []
+    if diverging:
+        subject = diverging[0]
+        return (f"The answer depends on the product model — "
+                f"\"{subject}\" differs between the documented models. "
+                f"Relevant documentation was found for: {products}. "
+                f"Please specify which product you mean.")
+    return (f"This depends on the product model. Relevant documentation "
+            f"was found for: {products}. Please specify which product "
+            f"you mean.")
 
 
 def _build_comparison_clarification(explicit_products: list) -> str:
@@ -307,24 +269,11 @@ def process_query(question: str,
             "intent_probabilities": intent_result["probabilities"],
         }
 
-    # [8-e] Product clarification — before retrieval (saves time)
-    if _needs_product_clarification(question, explicit_products,
-                                    analysis["query_type"]):
-        return {
-            "original_question": question,
-            "language": lang,
-            "rewritten_question": rewritten,
-            "expanded_question": expanded,
-            "expanded_queries": expanded_queries,
-            "query_type": analysis["query_type"],
-            "route_status": "needs_clarification",
-            "detected_product": None,
-            "answer_type": None,
-            "chunks": [],
-            "clarification": _build_product_clarification(question),
-            "intent_confidence": intent_result["confidence"],
-            "intent_probabilities": intent_result["probabilities"],
-        }
+    # [8-e] The old pre-retrieval keyword clarification gate lived here.
+    # Product-scope ambiguity is now decided AFTER retrieval ([12-d]) from
+    # the evidence itself, so unnamed topics (packing list, connectors,
+    # ground screw, ...) are covered too and convergent questions are not
+    # needlessly interrupted.
 
     # [۹] Retrieval — روی CHILD chunks (hierarchical)
     metadata_filter = None
@@ -373,6 +322,32 @@ def process_query(question: str,
             limit=6, level="parent")
         final_chunks = add_heading_parents(
             final_chunks, heading_hits, limit=top_k)
+
+    # [12-d] Product-scope ambiguity gate — evidence-driven. Only for
+    # questions naming no product (comparison has its own slot logic).
+    # If the documented values of the retrieved products diverge for what
+    # the question asks, clarify instead of merging or guessing; if they
+    # agree (or only one product is involved), answer normally. A detected
+    # divergence is never averaged away — one critical difference between
+    # models always asks.
+    if not explicit_products and analysis["query_type"] != "comparison":
+        scope = assess_product_scope(question, final_chunks)
+        if scope["verdict"] == "clarify":
+            return {
+                "original_question": question,
+                "language": lang,
+                "rewritten_question": rewritten,
+                "expanded_question": expanded,
+                "expanded_queries": expanded_queries,
+                "query_type": analysis["query_type"],
+                "route_status": "needs_clarification",
+                "detected_product": None,
+                "answer_type": None,
+                "chunks": [],
+                "clarification": _build_scope_clarification(scope),
+                "intent_confidence": intent_result["confidence"],
+                "intent_probabilities": intent_result["probabilities"],
+            }
 
     # [۱۳] Answer classification
     answer_type = None
