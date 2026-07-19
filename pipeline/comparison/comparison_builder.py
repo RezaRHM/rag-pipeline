@@ -105,13 +105,14 @@ def _mentioned_products(
 
         key = match.group(1).upper()
 
+        # Exact key substring only. The former "X acts as a digit wildcard"
+        # fallback (RD98XS -> RD98\dS) matched RD982S and confidently
+        # answered about the wrong product when a user typed a near-name like
+        # "RD982s" (meaning RD982i-S). A near-name should miss and fall
+        # through to the unsupported-product gate, never silently bind to a
+        # different model — X is a literal here (RD98XS, HR106X), not a
+        # wildcard.
         if key in q_upper:
-            matched.append(product)
-
-        elif "X" in key and re.search(
-            key.replace("X", r"\d"),
-            q_upper,
-        ):
             matched.append(product)
 
     return matched

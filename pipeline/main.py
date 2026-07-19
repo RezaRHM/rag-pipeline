@@ -454,6 +454,13 @@ def ask(question: str, conversation_history: list = None) -> dict:
     chunks = retrieval_result["chunks"]
     expanded_queries = retrieval_result.get("expanded_queries", [question])
 
+    # Generation must see the RESOLVED question, not the raw follow-up. For a
+    # single-turn question this equals `question`; for a follow-up like "i
+    # mean for the RD982i-S" the raw text carries no answerable question, so
+    # the model would (correctly, from its view) reply "you didn't ask
+    # anything specific". The rewritten form carries the inherited topic.
+    gen_question = retrieval_result.get("rewritten_question") or question
+
     quality = assess_retrieval_quality(chunks)
 
     if quality["status"] == "low_confidence" and len(expanded_queries) > 1:
@@ -463,13 +470,13 @@ def ask(question: str, conversation_history: list = None) -> dict:
 
     if quality["status"] in ("uncertain", "confident"):
         prompt = build_generation_prompt(
-            question, chunks,
+            gen_question, chunks,
             language_code=retrieval_result["language"]["code"]
         )
         answer = call_llm(prompt)
         answer_source = "generated"
     else:
-        generation_result = generate_answer(question, chunks)
+        generation_result = generate_answer(gen_question, chunks)
         answer = generation_result["answer"]
         answer_source = generation_result["source"]
 

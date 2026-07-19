@@ -170,6 +170,8 @@ FRAMING_WORDS = {
     "what", "about", "and", "how", "the", "for", "of", "on", "in", "is",
     "are", "it", "its", "one", "a", "an", "same", "then", "also", "too",
     "does", "do", "with",
+    # clarification-answer fillers: "i mean for the RD98XS", "i meant X"
+    "i", "mean", "meant",
 }
 
 _PREVIOUS_REF_RE = re.compile(
