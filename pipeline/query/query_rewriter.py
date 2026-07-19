@@ -177,12 +177,26 @@ _COMPARE_WORDS = {"compare", "comparison", "versus", "vs", "both",
                   "difference", "differences"}
 
 
+_CODE_TOKEN_RE = re.compile(r"\b[A-Za-z]{1,3}\d{1,3}\b")
+
+
+def _codes_in_text(text: str, known_products: list) -> list:
+    """Short letters+digits tokens (E3, H5, F12, IP68) that are not
+    registry product keys. Letter-only codes (EH, bP) are consciously out
+    of scope: two plain letters cannot be told apart from words safely."""
+    keys = {_product_key(p) for p in known_products}
+    return [c for c in _CODE_TOKEN_RE.findall(text)
+            if c.upper() not in keys]
+
+
 def _content_tokens(question: str, known_products: list) -> set:
-    """Alpha tokens that carry topic: framing words and product keys out."""
+    """Alpha tokens that carry topic: framing words, product keys and
+    code-shaped tokens out."""
     keys = {_product_key(p).lower() for p in known_products}
     tokens = set(re.findall(r"[a-z][\w-]*", question.lower()))
     return {t for t in tokens
-            if t not in FRAMING_WORDS and t not in keys}
+            if t not in FRAMING_WORDS and t not in keys
+            and not re.fullmatch(r"[a-z]{1,3}\d{1,3}", t)}
 
 
 def _is_product_switch_ellipsis(question: str,
@@ -211,6 +225,37 @@ def _last_topical_user_turn(conversation_history: list,
         if len(_content_tokens(content, known_products)) >= 2:
             return content
     return ""
+
+
+def _is_code_switch_ellipsis(question: str,
+                             known_products: list) -> bool:
+    """"And E3?" — a code is named and nothing topical remains.
+
+    Besides zero content tokens, the question must be genuinely elliptical:
+    at most two alpha tokens or an explicit elliptical opener. This keeps
+    a definitional "What is IP68?" standalone instead of inheriting an
+    unrelated previous topic.
+    """
+    if _content_tokens(question, known_products):
+        return False
+    alpha_tokens = re.findall(r"[a-z][\w-]*", question.lower())
+    return len(alpha_tokens) <= 2 or _is_elliptical(question)
+
+
+def _swap_code(topic_question: str, new_code: str,
+               known_products: list) -> str:
+    """Carry the topic over to the newly named code, keeping everything
+    else (including the product) intact. Empty result means the topical
+    turn had no code to swap — caller falls back to leaving the question
+    unchanged."""
+    old_codes = set(_codes_in_text(topic_question, known_products))
+    if not old_codes:
+        return ""
+    swapped = topic_question
+    for old in old_codes:
+        swapped = re.sub(r"\b" + re.escape(old) + r"\b", new_code,
+                         swapped, flags=re.IGNORECASE)
+    return swapped
 
 
 def _swap_product(topic_question: str, new_product: str,
@@ -275,6 +320,16 @@ def rewrite_query(question: str, conversation_history: list) -> str:
                 new_product = _keys_in_text(question, known_products)[0]
                 return _swap_product(topic, new_product, known_products)
         return question
+
+    # تعویض کد ("And E3?" بعد از سوال درباره‌ی E2): موضوع و محصولِ نوبتِ
+    # موضوع‌دارِ قبلی حفظ می‌شود، فقط کد عوض می‌شود
+    codes_now = _codes_in_text(question, known_products)
+    if codes_now and _is_code_switch_ellipsis(question, known_products):
+        topic = _last_topical_user_turn(conversation_history, known_products)
+        if topic:
+            swapped = _swap_code(topic, codes_now[0], known_products)
+            if swapped:
+                return swapped
 
     # امتیاز dependency
     score = _context_dependency_score(question)
