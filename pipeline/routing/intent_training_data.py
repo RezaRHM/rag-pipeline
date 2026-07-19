@@ -328,6 +328,32 @@ TRAIN_DATA = [
     ("how many indicators are provided", "standard"),
     ("does it meet the stated safety standard", "standard"),
     ("is solvent allowed for product care", "standard"),
+
+    # ── v3.3: telegraphic spec questions with power/location words ──
+    # Validation T1/A4 showed "MODEL output power?" and "ground screw
+    # location?" tipping to troubleshooting: "power" and "location" were
+    # only seen in fault contexts. Spec-flavoured telegraphic forms:
+    ("AX500 output power?", "standard"),
+    ("TX900 power specifications?", "standard"),
+    ("BX700 transmit power?", "standard"),
+    ("NX400 power consumption?", "standard"),
+    ("RX800 rated output power?", "standard"),
+    ("Alpha300 supply voltage?", "standard"),
+    ("ground screw location?", "standard"),
+    ("Beta600 antenna connector location?", "standard"),
+    ("where is the power inlet on Gamma20", "standard"),
+    ("Delta10 power levels?", "standard"),
+
+    # ── v3.3: post-installation confirmation is procedural, not a fault ──
+    # Validation M4: "after installing X, confirm power-on and what the
+    # LEDs mean" read as troubleshooting because power/LED words only
+    # appeared with symptoms. Confirmation/check phrasings:
+    ("after installing AX500, how do I confirm it works", "procedural"),
+    ("verify the repeater works after installation", "procedural"),
+    ("post-installation check for BX700", "procedural"),
+    ("after setup, confirm power-on and check the LED status", "procedural"),
+    ("how do I check the LEDs after powering on TX900", "procedural"),
+    ("confirm the unit powered on correctly after mounting", "procedural"),
 ]
 
 # The first one-shot acceptance set was rejected (macro-F1=0.825). Once its

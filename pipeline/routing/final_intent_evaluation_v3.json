@@ -19,10 +19,10 @@
       0
     ],
     [
-      1,
+      2,
       18,
       0,
-      1
+      0
     ],
     [
       1,
@@ -39,9 +39,9 @@
   ],
   "metrics": {
     "standard": {
-      "precision": 0.9090909090909091,
+      "precision": 0.8695652173913043,
       "recall": 1.0,
-      "f1-score": 0.9523809523809523,
+      "f1-score": 0.9302325581395349,
       "support": 20.0
     },
     "procedural": {
@@ -57,22 +57,22 @@
       "support": 20.0
     },
     "troubleshooting": {
-      "precision": 0.9047619047619048,
+      "precision": 0.95,
       "recall": 0.95,
-      "f1-score": 0.926829268292683,
+      "f1-score": 0.95,
       "support": 20.0
     },
     "accuracy": 0.9375,
     "macro avg": {
-      "precision": 0.9403053087263613,
+      "precision": 0.941733409610984,
       "recall": 0.9375,
-      "f1-score": 0.9374138912007974,
+      "f1-score": 0.9376694755672723,
       "support": 80.0
     },
     "weighted avg": {
-      "precision": 0.9403053087263613,
+      "precision": 0.9417334096109841,
       "recall": 0.9375,
-      "f1-score": 0.9374138912007975,
+      "f1-score": 0.9376694755672725,
       "support": 80.0
     }
   },
@@ -81,34 +81,34 @@
       "question": "give me directions for wiring the DC input",
       "expected": "procedural",
       "predicted": "standard",
-      "confidence": 0.545816
+      "confidence": 0.521224
     },
     {
       "question": "what must be done to select low output power",
       "expected": "procedural",
-      "predicted": "troubleshooting",
-      "confidence": 0.317815
+      "predicted": "standard",
+      "confidence": 0.406999
     },
     {
       "question": "fuse opens each time the unit is switched on",
       "expected": "troubleshooting",
       "predicted": "comparison",
-      "confidence": 0.754493
+      "confidence": 0.757866
     },
     {
       "question": "does UV510 have features missing from PK940",
       "expected": "comparison",
       "predicted": "standard",
-      "confidence": 0.466312
+      "confidence": 0.482434
     },
     {
       "question": "which repeater delivers greater transmit power",
       "expected": "comparison",
       "predicted": "troubleshooting",
-      "confidence": 0.615783
+      "confidence": 0.502321
     }
   ],
-  "artifact_sha256": "6e22987d5812b3e7f2309aad41e17750d726eab19cae47e72d334d8fb2e0cf06",
+  "artifact_sha256": "18be29b42c5284ff81cfa00325fd31e1a123801ccb7b19b5178e45d81ba3e725",
   "test_set_sha256": "7846a4039dc5e931c2ebe276a55cdbe66865953833a21a6ce90d0a7596143170",
   "exact_train_test_overlap": [],
   "normalized_train_test_overlap": []
