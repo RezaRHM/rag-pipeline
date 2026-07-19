@@ -61,7 +61,9 @@ def classify_answer_type(question: str, chunks: list) -> str:
             "model": config.DEFAULT_MODEL,
             "messages": [{"role": "user", "content": prompt}]
         },
-        timeout=30
+        # was a hardcoded 30 while the rest of the pipeline uses
+        # config.LLM_TIMEOUT — that mismatch caused the F3 batch flake
+        timeout=config.LLM_TIMEOUT
     )
     response.raise_for_status()
     raw = response.json()["choices"][0]["message"]["content"]

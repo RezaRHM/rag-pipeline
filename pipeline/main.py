@@ -282,6 +282,26 @@ def process_query(question: str,
     # ground screw, ...) are covered too and convergent questions are not
     # needlessly interrupted.
 
+    # [8-f] Comparison questions never use the generic retrieval below —
+    # ask() hands them to build_comparison, which retrieves per product
+    # with its own budgets. Running the full multi-query + rerank here just
+    # to discard the chunks cost ~15-30s on every comparison.
+    if analysis["query_type"] == "comparison":
+        return {
+            "original_question": question,
+            "language": lang,
+            "rewritten_question": rewritten,
+            "expanded_question": expanded,
+            "expanded_queries": expanded_queries,
+            "query_type": "comparison",
+            "route_status": "ready",
+            "intent_confidence": intent_result["confidence"],
+            "intent_probabilities": intent_result["probabilities"],
+            "detected_product": analysis["product"],
+            "answer_type": None,
+            "chunks": [],
+        }
+
     # [۹] Retrieval — روی CHILD chunks (hierarchical)
     metadata_filter = None
     if analysis["product"]:
