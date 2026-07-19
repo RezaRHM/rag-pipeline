@@ -382,17 +382,22 @@ def ingest_document(pdf_path: Path, product_override: str = None) -> dict:
         print("⚠️  Document flagged by security scan. Skipping.")
         return {"status": "quarantined"}
 
-    print("Extracting metadata via LLM...")
-    metadata = extract_metadata(markdown_text, pdf_path.name)
-    # normalize product name — حذف توضیحات داخل پرانتز
-    # تا mismatch بین ingestion و query filter پیش نیاد
-    metadata["product"] = re.sub(r'\s*\(.*?\)', '', metadata["product"]).strip()
-    # Manual override: the LLM detector can mangle model names (OCR spacing,
-    # multi-variant manuals). When the caller knows the canonical product name,
-    # it wins over the detector.
+    # When the caller already knows the canonical product name, skip the LLM
+    # metadata call entirely: it only extracts product/doc_type/version, the
+    # product is being overridden anyway, and the call is the first thing to
+    # stall under load. doc_type defaults to manual (correct for these docs).
     if product_override:
-        print(f"  [override] product: {metadata['product']!r} -> {product_override!r}")
-        metadata["product"] = product_override
+        metadata = {"product": product_override,
+                    "doc_type": "manual", "version": "unknown"}
+        print(f"  [override] product={product_override} "
+              f"(skipped LLM metadata)")
+    else:
+        print("Extracting metadata via LLM...")
+        metadata = extract_metadata(markdown_text, pdf_path.name)
+        # normalize product name — حذف توضیحات داخل پرانتز
+        # تا mismatch بین ingestion و query filter پیش نیاد
+        metadata["product"] = re.sub(
+            r'\s*\(.*?\)', '', metadata["product"]).strip()
     print(f"  product={metadata['product']}, doc_type={metadata['doc_type']}, "
           f"version={metadata['version']}")
 
