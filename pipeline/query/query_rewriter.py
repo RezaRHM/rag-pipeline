@@ -81,7 +81,10 @@ def _context_dependency_score(question: str) -> int:
         score += 2
     if _is_elliptical(question):
         score += 3
-    if _has_standalone_entity(question):
+    # A technical token pins the OBJECT of the question, not its subject:
+    # "Does it support IP68?" still needs "it" resolved. The standalone
+    # discount therefore only applies when no pronoun asks for a referent.
+    if _has_standalone_entity(question) and not _has_pronoun(question):
         score -= 4
 
     # سوال کامل (با subject صریح) standalone‌تره
@@ -342,15 +345,21 @@ def rewrite_query(question: str, conversation_history: list) -> str:
     if not stack:
         return question
 
+    words = set(re.findall(r"[a-z]+", question.lower()))
+
     # "the previous one" / "the other one" → stack[1]. با عبارت مقایسه‌ای
     # یا ضمیر همراهش ("compare it with the previous one") هر دو محصول
     # ضمیمه می‌شن تا مسیر مقایسه هر دو رو صریح ببینه.
     if _PREVIOUS_REF_RE.search(question) and len(stack) >= 2:
-        wants_both = (_has_pronoun(question)
-                      or bool(set(re.findall(r"[a-z]+", question.lower()))
-                              & _COMPARE_WORDS))
+        wants_both = _has_pronoun(question) or bool(words & _COMPARE_WORDS)
         if wants_both:
             return f"{question} (the {stack[0]} and the {stack[1]})"
         return f"{question} (the {stack[1]})"
+
+    # "Compare them." — ضمیر جمع یا فعل مقایسه بدون نام بردن محصول یعنی
+    # همان دو محصولی که بحث شده‌اند؛ هر دو ضمیمه می‌شوند
+    plural = bool(words & {"them", "these", "those", "both"})
+    if (plural or words & _COMPARE_WORDS) and len(stack) >= 2:
+        return f"{question} (the {stack[0]} and the {stack[1]})"
 
     return f"{question} (the {stack[0]})"
