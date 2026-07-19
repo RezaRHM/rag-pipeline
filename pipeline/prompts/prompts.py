@@ -83,6 +83,49 @@ information exists in the documents, and suggest they contact Rohill
 technical support directly."""
 
 
+import re
+
+_TABLE_ROW_RE = re.compile(r"^\s*\|(.+)\|\s*$")
+_TABLE_SEP_RE = re.compile(r"^\s*\|[\s:|-]+\|\s*$")
+
+
+def _flatten_tables(text: str) -> str:
+    """Rewrite markdown tables as explicit per-row lines.
+
+    The 8B generator reads prose reliably but table geometry unreliably: in
+    three consecutive validation runs it dropped a Packing List row and then
+    asserted nothing else was included — a false negative built from a table
+    it had fully in context. Every data row becomes a "Header: cell" line so
+    each cell is stated explicitly and no row can be skimmed over. Generic
+    markdown handling; no knowledge of any specific table or product.
+    """
+    lines = text.splitlines()
+    out = []
+    i = 0
+    while i < len(lines):
+        row = _TABLE_ROW_RE.match(lines[i])
+        if (row and i + 1 < len(lines)
+                and _TABLE_SEP_RE.match(lines[i + 1])):
+            headers = [h.strip() for h in row.group(1).split("|")]
+            i += 2
+            while i < len(lines):
+                data = _TABLE_ROW_RE.match(lines[i])
+                if not data or _TABLE_SEP_RE.match(lines[i]):
+                    break
+                cells = [c.strip() for c in data.group(1).split("|")]
+                pairs = []
+                for header, cell in zip(headers, cells):
+                    if cell and cell not in ("/", "-"):
+                        pairs.append(f"{header}: {cell}" if header else cell)
+                if pairs:
+                    out.append("- " + "; ".join(pairs))
+                i += 1
+        else:
+            out.append(lines[i])
+            i += 1
+    return "\n".join(out)
+
+
 def build_context_block(chunks: list) -> str:
     """chunk های نهایی رو به یه متن context قابل خوندن برای LLM تبدیل می‌کنه"""
     blocks = []
@@ -90,6 +133,7 @@ def build_context_block(chunks: list) -> str:
         product = c.payload.get("product", "unknown")
         section = c.payload.get("section", "unknown")
         text = c.payload.get("text", "")
+        text = _flatten_tables(text.replace("<!-- image -->", "").strip())
         blocks.append(f"[Source: {product} — {section}]\n{text}")
 
     return "\n\n".join(blocks)
