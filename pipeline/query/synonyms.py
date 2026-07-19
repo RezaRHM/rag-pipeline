@@ -82,6 +82,26 @@ TECHNICAL_SYNONYMS = {
         "ingress protection",
         "weatherproofing"
     ],
+    # Users ask "is it waterproof?"; the manuals answer under "degree of
+    # protection" / "outdoor operation" (RD965: IP67; HP7: IP68 dust and
+    # waterproof). Without these keys the protection-rating entry above
+    # never fires, because its own key never appears in the question.
+    "waterproof": [
+        "degree of protection",
+        "ingress protection",
+        "IP rating",
+        "outdoor operation"
+    ],
+    "weatherproof": [
+        "degree of protection",
+        "ingress protection",
+        "outdoor operation"
+    ],
+    "dustproof": [
+        "degree of protection",
+        "ingress protection",
+        "IP rating"
+    ],
     # Manuals answer "what ships with the unit" under "Packing List";
     # users ask with "accessories / comes with / in the box". Without this
     # bridge no ranking mechanism reliably surfaces the Packing List section
