@@ -24,15 +24,20 @@ CASES = [
     ("U2", "unsupported", "What is the frequency range of the RD98XS?", "Absent; avoid VSWR antenna-frequency trap"),
     ("U3", "unsupported", "What is the weight of the HR652?", "Mentioned without a numeric value"),
     ("U4", "unsupported", "Is the RD98XS IP68 rated?", "Absent; do not transfer HP7 IP68"),
-    ("A1", "ambiguous", "Cleaning instructions?", "Optional clarification; both nearly identical"),
-    ("A2", "ambiguous", "What's in the box?", "Clarification required"),
-    ("A3", "ambiguous", "Antenna connector type?", "Clarification required"),
-    ("A4", "ambiguous", "Ground screw location?", "Clarification required"),
+    # A-series expectations revised 2026-07-19 for the five-document corpus
+    # (corpus evidence in validation/validation_set_v1_revisions.md)
+    ("A1", "ambiguous", "Cleaning instructions?", "Answer (per-product) or clarification both acceptable; cleaning guidance materially identical across manuals"),
+    ("A2", "ambiguous", "What's in the box?", "Clarification required (packed items differ per product)"),
+    ("A3", "ambiguous", "Antenna connector type?", "Clarification required (Type-N vs UHF/SMA differ per product)"),
+    ("A4", "ambiguous", "Ground screw location?", "Answer acceptable: every documented manual places it on the rear panel; clarification optional"),
     ("M2", "multi_section", "Before cleaning the RD98XS, what to do first and what to avoid?", "RD98XS section 7.2"),
     ("M3", "multi_section", "Steps to install the RD98XS and confirm it works afterward?", "Sections 3.2.2 and 3.3"),
     ("M4", "multi_section", "After installing the RD98XS, confirm power-on and what the LEDs mean?", "Sections 3.3 and 5.2"),
     ("C1", "comparison", "Do RD98XS and HR652 ship with the same accessories?", "Packing lists for both"),
-    ("C2", "comparison", "Which repeater documents its output power?", "HR652 yes; RD98XS no"),
+    # C2 revised 2026-07-19: the "HR652 yes; RD98XS no" expectation assumed
+    # the old implicit two-product corpus; with five products and none
+    # named, asking which products to compare is the designed behavior.
+    ("C2", "comparison", "Which repeater documents its output power?", "needs_clarification (no products named in a five-product corpus)"),
     ("C3", "comparison", "Which repeater needs a Phillips screwdriver, RD98XS or HR652?", "Evidence from both manuals"),
     ("C4", "comparison", "Compare the alarm code systems of the RD98XS and HR652.", "RD98XS named alarms vs HR652 E-codes"),
 ]
