@@ -13,6 +13,7 @@ Context-resolution gate چندمرحله‌ای — طبق پیشنهاد معم
 
 import re
 from db.connection import get_postgres
+from routing.intent_normalizer import is_technical_token
 
 
 # ── Deterministic Gate ────────────────────────────────────
@@ -184,6 +185,10 @@ _COMPARE_WORDS = {"compare", "comparison", "versus", "vs", "both",
 
 _CODE_TOKEN_RE = re.compile(r"\b[A-Za-z]{1,3}\d{1,3}\b")
 
+# letters + >=2 digits (+ optional trailing alnum): the shape of a model
+# name, documented or not — used to clear stale product references
+_MODEL_SHAPE_RE = re.compile(r"\b[A-Za-z]{1,5}\d{2,4}[A-Za-z0-9-]{0,4}\b")
+
 
 def _codes_in_text(text: str, known_products: list) -> list:
     """Short letters+digits tokens (E3, H5, F12, IP68) that are not
@@ -217,19 +222,27 @@ def _is_product_switch_ellipsis(question: str,
 
 def _last_topical_user_turn(conversation_history: list,
                             known_products: list) -> str:
-    """The most recent user turn that actually carries a topic.
+    """The user turn whose topic a product switch should inherit.
 
-    Elliptical turns ("And the HR106X?") are skipped automatically because
-    they have no content tokens, so a chain of product switches keeps
-    inheriting the original topical question.
+    Walks back over the current run of dependent turns and returns the one
+    that OPENED it. A pronoun-bearing follow-up ("Does it need a
+    multimeter?") is a narrowing of the standing topic, not a new one:
+    inheriting it made "And the RD625?" ask only about multimeters instead
+    of re-asking the original tools question. So dependent turns are passed
+    over, and the earliest topical turn of the run wins.
     """
+    candidate = ""
     for turn in reversed(conversation_history):
         if turn.get("role") != "user":
             continue
         content = turn.get("content", "")
-        if len(_content_tokens(content, known_products)) >= 2:
-            return content
-    return ""
+        if len(_content_tokens(content, known_products)) < 2:
+            continue          # elliptical / no topic of its own
+        candidate = content
+        if not (_has_pronoun(content) or _has_demonstrative_ref(content)
+                or _is_elliptical(content)):
+            break             # self-contained: this opened the run
+    return candidate
 
 
 def _is_code_switch_ellipsis(question: str,
@@ -285,6 +298,30 @@ def _swap_product(topic_question: str, new_product: str,
         new = re.subn(key_pattern, new_product, swapped, flags=re.IGNORECASE)
         if new[1]:
             swapped, replaced = new[0], True
+
+    # Strip any remaining model-shaped token that is not the new product.
+    # The loop above only rewrites names in the registry, so an UNDOCUMENTED
+    # model from the previous turn survived: "output power of the RD9999?"
+    # + RD965 became "output power of the RD9999? (the RD965)", which asks
+    # about the wrong (and unknown) product.
+    new_key = _product_key(new_product)
+    leftovers = [tok for tok in _MODEL_SHAPE_RE.findall(swapped)
+                 if tok.upper() != new_key
+                 and not tok.upper().startswith(new_key)
+                 and not is_technical_token(tok)]
+    for tok in leftovers:
+        # take any article/preposition immediately before the stale model
+        # name with it, so "power of the RD9999?" does not become the
+        # dangling "power of the?"
+        swapped = re.sub(
+            r"(?:\s+(?:the|a|an|of|for|on|in|with))*\s*\b"
+            + re.escape(tok) + r"\b",
+            "", swapped, flags=re.IGNORECASE)
+        replaced = True
+    if leftovers:
+        swapped = re.sub(r"\s{2,}", " ", swapped).strip()
+        return f"{swapped} (the {new_product})"
+
     if replaced:
         return swapped
     return f"{topic_question} (the {new_product})"
