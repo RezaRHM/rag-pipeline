@@ -195,6 +195,13 @@ def process_query(question: str,
                           "more suitable", "better for"]
 
     explicit_products = _mentioned_products(question, _get_all_products())
+    if not explicit_products and rewritten != question:
+        # A follow-up whose pronoun the rewriter resolved ("How do I install
+        # it?" -> "... the HR652?") names its product only in the REWRITTEN
+        # form. Honoring it here scopes retrieval to that product and keeps
+        # the ambiguity gate from re-asking what the user just said.
+        # Comparison signals below still read the original question only.
+        explicit_products = _mentioned_products(rewritten, _get_all_products())
     comparison_signal = any(s in question.lower() for s in COMPARISON_SIGNALS)
 
     # product scope: شواهد لغوی بر استنتاج مدل اولویت دارد
@@ -402,7 +409,11 @@ def ask(question: str, conversation_history: list = None) -> dict:
         pg.close()
 
         comp_result = build_comparison(
-            original_question=retrieval_result["original_question"],
+            # the RESOLVED question: for single-turn questions it equals the
+            # original; for follow-ups ("Compare it with the previous one.")
+            # it carries the products the rewriter resolved from the
+            # conversation, which the builder's own mention detection needs.
+            original_question=retrieval_result["rewritten_question"],
             search_question=retrieval_result["expanded_question"],
             products=all_products,
             top_k=3,

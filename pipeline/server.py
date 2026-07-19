@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 import uvicorn
 
 from main import ask
+from query.query_rewriter import rewrite_query
 from security.input_validator import validate_input
 from security.guard import check_topic
 from cache.exact_cache import get_cached_response, cache_response
@@ -128,10 +129,16 @@ async def chat_completions(request: Request):
     def run_pipeline():
         import time as _time
         try:
-            # اول cache رو چک کن
-            cached = get_cached_response(question)
+            # کلید cache = سوالِ «حل‌شده»، نه متنِ خام. یک سوالِ ضمیردار
+            # ("How do I install it?") در دو گفت‌وگوی مختلف دو معنی متفاوت
+            # دارد؛ کلیدِ خام جوابِ محصولِ گفت‌وگوی قبلی را به گفت‌وگوی بعدی
+            # نشت می‌داد. rewrite_query قطعی و بدون LLM است، پس این lookup
+            # ارزان است و ask() داخل خودش به همان نتیجه می‌رسد.
+            cache_question = rewrite_query(question, history)
+
+            cached = get_cached_response(cache_question)
             if cached["hit"]:
-                print(f"[CACHE HIT] {question[:60]}")
+                print(f"[CACHE HIT] {cache_question[:60]}")
                 _log_result(question, cached["answer"], 0.0, "cached", True)
                 return cached["answer"]
 
@@ -154,7 +161,7 @@ async def chat_completions(request: Request):
                 c.payload.get("chunk_id", "")
                 for c in result.get("chunks", [])
             ]
-            cache_response(question, answer, chunk_ids)
+            cache_response(cache_question, answer, chunk_ids)
 
             return answer
         except Exception as e:
