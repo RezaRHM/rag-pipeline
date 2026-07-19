@@ -13,7 +13,7 @@ Orchestrator اصلی pipeline — نسخه Hierarchical.
 """
 
 from language.language_detector import detect_language
-from query.query_rewriter import rewrite_query
+from query.query_rewriter import rewrite_query, _product_stack
 from query.query_expander import expand_query
 from routing.intent_router import classify_intent
 from routing.ambiguity_gate import assess_product_scope
@@ -202,6 +202,23 @@ def process_query(question: str,
         # the ambiguity gate from re-asking what the user just said.
         # Comparison signals below still read the original question only.
         explicit_products = _mentioned_products(rewritten, _get_all_products())
+
+    # Sticky active product: a standalone question that names no product and
+    # carries no pronoun/ellipsis (so the rewriter left it unchanged) still
+    # belongs to the conversation's active product — but ONLY when exactly
+    # one distinct product has been in play ("...VSWR issue?" after four
+    # turns on the RD982i-S). Several distinct products => genuinely
+    # ambiguous, so we leave it for the ambiguity gate to ask. A question
+    # naming a different product already resolved above and never reaches
+    # here. The ambiguity gate stays the safety net if evidence for the
+    # assumed product turns out weak.
+    if (not explicit_products and rewritten == question
+            and conversation_history
+            and analysis["query_type"] != "comparison"):
+        active = _product_stack(conversation_history, _get_all_products())
+        if len(active) == 1:
+            explicit_products = [active[0]]
+
     comparison_signal = any(s in question.lower() for s in COMPARISON_SIGNALS)
 
     # product scope: شواهد لغوی بر استنتاج مدل اولویت دارد
